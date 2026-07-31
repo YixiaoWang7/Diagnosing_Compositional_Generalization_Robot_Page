@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Q3 — Cover Dependent Instruction Factors</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #f8f9fa;
+  --card: #fff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --line: #e0e4ea;
+  --blue: #1F4E9E;
+  --blue-soft: #e8eef8;
+  --green: #2E7D32;
+  --green-soft: #e8f5e9;
+  --orange: #C5582D;
+  --orange-soft: #fde8e0;
+  --shadow: 0 2px 12px rgba(0,0,0,0.07);
+}
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  padding: 1.25rem 1rem 2.5rem;
+  line-height: 1.45;
+  overflow-x: hidden;
+}
+.page { max-width: 1080px; margin: 0 auto; }
+
+/* ── Highlight band ── */
+.highlight {
+  background: var(--blue);
+  color: #fff;
+  border-radius: 14px;
+  padding: 1.1rem 1.35rem 1.2rem;
+  text-align: center;
+  margin-bottom: 1rem;
+  box-shadow: var(--shadow);
+}
+.highlight .conclusion {
+  font-size: 1.2rem;
+  font-weight: 750;
+  margin-bottom: 0.85rem;
+  letter-spacing: -0.01em;
+}
+.spans {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  max-width: 720px;
+  margin: 0 auto;
+}
+.span-card {
+  background: rgba(255,255,255,0.14);
+  border: 1px solid rgba(255,255,255,0.22);
+  border-radius: 10px;
+  padding: 0.65rem 0.85rem;
+  text-align: left;
+}
+.span-card .slabel {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  opacity: 0.85;
+  margin-bottom: 0.2rem;
+}
+.span-card .sval {
+  font-size: 1.45rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.span-card .snote {
+  font-size: 0.72rem;
+  opacity: 0.8;
+  margin-top: 0.1rem;
+}
+.span-card.up .sval { color: #b8f0c0; }
+.span-card.down .sval { color: #ffc9b0; }
+
+.page-title {
+  text-align: center;
+  font-size: 0.92rem;
+  color: var(--muted);
+  margin-bottom: 1rem;
+  font-weight: 500;
+}
+
+/* ── Cards ── */
+.card {
+  background: var(--card);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  padding: 1.1rem 1.25rem 1.2rem;
+  margin-bottom: 0.9rem;
+}
+.card h2 {
+  font-size: 0.95rem;
+  font-weight: 750;
+  margin-bottom: 0.2rem;
+}
+.card .lead {
+  font-size: 0.82rem;
+  color: var(--muted);
+  margin-bottom: 0.85rem;
+}
+
+/* ── Instruction strip ── */
+.instr-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.85rem;
+}
+.chip {
+  border-radius: 9px;
+  padding: 0.35rem 0.7rem;
+  font-size: 0.82rem;
+  font-weight: 650;
+  border: 1.5px solid var(--line);
+  background: #fafbfd;
+}
+.chip .k {
+  display: block;
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  font-weight: 700;
+}
+.chip.given { border-color: #b8d0f0; background: var(--blue-soft); }
+.chip.reserved { border-color: #f0c4b4; background: var(--orange-soft); color: var(--orange); }
+.chip.missing { border-style: dashed; color: #999; background: #f4f5f7; }
+
+/* ── Task contrast ── */
+.contrast {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.85rem;
+}
+.panel {
+  border: 2px solid var(--line);
+  border-radius: 12px;
+  padding: 0.7rem 0.75rem 0.8rem;
+  background: #fafbfd;
+}
+.panel.valid { border-color: var(--green); background: #f4fbf5; }
+.panel.viol { border-color: var(--orange); background: #fff8f5; }
+.panel .plabel {
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  margin-bottom: 0.55rem;
+}
+.panel.valid .plabel { color: var(--green); }
+.panel.viol .plabel { color: var(--orange); }
+
+.mini-scene {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.45rem;
+}
+.bowl-box {
+  border: 1.5px solid #d0d7e4;
+  border-radius: 10px;
+  padding: 0.4rem 0.3rem 0.5rem;
+  text-align: center;
+  background: #fff;
+  min-height: 88px;
+  position: relative;
+}
+.bowl-box .name {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--muted);
+  margin-bottom: 0.3rem;
+}
+.bowl-box.reserved {
+  border-color: var(--orange);
+  background: #fff8f5;
+}
+.bowl-box.reserved .name { color: var(--orange); }
+.bowl-box.ok {
+  border-color: var(--green);
+  background: #f0faf1;
+}
+.bowl-shape {
+  width: 48px;
+  height: 30px;
+  margin: 0 auto;
+  border: 2px solid #9aa8bf;
+  border-top: none;
+  border-radius: 0 0 14px 14px;
+  background: linear-gradient(180deg, #f4f7fb, #e4ebf5);
+}
+.bowl-box.reserved .bowl-shape { border-color: var(--orange); }
+.obj-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 0.35rem;
+  min-width: 28px;
+  height: 22px;
+  padding: 0 0.35rem;
+  border-radius: 5px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: #fff;
+}
+.obj-chip.o1 { background: var(--blue); }
+.obj-chip.o2 { background: #5a7fb8; }
+.obj-chip.bad { background: var(--orange); }
+.obj-chip.empty {
+  background: transparent;
+  color: #bbb;
+  border: 1px dashed #ccc;
+  font-weight: 600;
+}
+.rbadge {
+  position: absolute;
+  top: -8px;
+  right: 4px;
+  background: var(--orange);
+  color: #fff;
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  padding: 0.1rem 0.35rem;
+  border-radius: 999px;
+}
+.panel .pcaption {
+  margin-top: 0.5rem;
+  font-size: 0.76rem;
+  color: #444;
+  text-align: center;
+  font-weight: 550;
+}
+.task-caption {
+  margin-top: 0.75rem;
+  text-align: center;
+  font-size: 0.84rem;
+  color: #334;
+  background: var(--blue-soft);
+  border-radius: 8px;
+  padding: 0.55rem 0.8rem;
+}
+.task-caption strong { color: var(--blue); }
+
+/* ── Coverage row ── */
+.cov-row {
+  display: grid;
+  grid-template-columns: minmax(200px, 240px) 1fr;
+  gap: 1.1rem;
+  align-items: center;
+}
+.lattice {
+  display: grid;
+  grid-template-columns: 22px repeat(3, 1fr);
+  gap: 4px;
+  align-items: center;
+}
+.lattice .xlab, .lattice .ylab {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--muted);
+  text-align: center;
+}
+.lattice .ylab {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  grid-row: span 4;
+}
+.lcell {
+  aspect-ratio: 1;
+  border-radius: 5px;
+  border: 1.5px solid #d8dde6;
+  background: #eef1f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.62rem;
+  font-weight: 800;
+  color: #8a97ad;
+  transition: background 0.3s, border-color 0.3s, color 0.3s;
+}
+.lcell.on {
+  background: var(--blue);
+  border-color: var(--blue);
+  color: #fff;
+}
+.lcell.example {
+  box-shadow: inset 0 0 0 2px var(--orange);
+}
+.lcell.example::after {
+  content: '';
+}
+.cov-meta .meter-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  margin-bottom: 0.3rem;
+}
+.meter-bar {
+  height: 12px;
+  border-radius: 999px;
+  background: #e6ebf3;
+  overflow: hidden;
+  margin-bottom: 0.3rem;
+}
+.meter-fill {
+  height: 100%;
+  background: var(--blue);
+  border-radius: 999px;
+  width: 100%;
+  transition: width 0.35s ease;
+}
+.meter-value {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--blue);
+}
+.meter-sub {
+  font-size: 0.76rem;
+  color: var(--muted);
+  margin-top: 0.1rem;
+  margin-bottom: 0.65rem;
+}
+.budget-strip {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 3px;
+  max-width: 280px;
+}
+.btask {
+  aspect-ratio: 1;
+  border-radius: 3px;
+  background: var(--blue);
+  opacity: 0.85;
+}
+.budget-note {
+  font-size: 0.74rem;
+  color: var(--muted);
+  margin-top: 0.35rem;
+}
+
+/* ── Controls + chart ── */
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+.controls label {
+  font-size: 0.82rem;
+  font-weight: 650;
+  margin-right: 0.15rem;
+}
+.cov-btn {
+  border: 1.5px solid #d0d5dd;
+  background: #fff;
+  color: #333;
+  border-radius: 7px;
+  padding: 0.35rem 0.7rem;
+  font-size: 0.82rem;
+  font-weight: 650;
+  cursor: pointer;
+}
+.cov-btn:hover { border-color: var(--blue); color: var(--blue); }
+.cov-btn.active {
+  background: var(--blue);
+  border-color: var(--blue);
+  color: #fff;
+}
+
+.chart-wrap {
+  border: 1.5px solid var(--line);
+  border-radius: 12px;
+  padding: 0.6rem 0.7rem 0.4rem;
+  background: #fff;
+}
+canvas#chartCombined {
+  width: 100%;
+  height: 300px;
+  display: block;
+}
+.legend {
+  display: flex;
+  gap: 1.1rem;
+  justify-content: center;
+  margin-top: 0.45rem;
+  font-size: 0.78rem;
+  color: var(--muted);
+  flex-wrap: wrap;
+}
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+.swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+}
+
+.caveat {
+  margin-top: 0.7rem;
+  font-size: 0.76rem;
+  color: var(--muted);
+  text-align: center;
+  line-height: 1.4;
+}
+.footnote {
+  text-align: center;
+  font-size: 0.72rem;
+  color: #999;
+  margin-top: 0.85rem;
+}
+
+@media (max-width: 760px) {
+  .spans, .contrast, .cov-row { grid-template-columns: 1fr; }
+  .highlight .conclusion { font-size: 1.05rem; }
+  .span-card .sval { font-size: 1.25rem; }
+  canvas#chartCombined { height: 260px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .meter-fill, .lcell { transition: none !important; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- 1. Highlight band -->
+  <header class="highlight">
+    <div class="conclusion">Cover the instruction factors whose meanings depend on each other.</div>
+    <div class="spans">
+      <div class="span-card up">
+        <div class="slabel">OOD success</div>
+        <div class="sval">1.3% → 18.5%</div>
+        <div class="snote">Cov4 → Cov12 · higher is better</div>
+      </div>
+      <div class="span-card down">
+        <div class="slabel">OOD same-container violation</div>
+        <div class="sval">36.2% → 15.7%</div>
+        <div class="snote">Cov4 → Cov12 · lower is better</div>
+      </div>
+    </div>
+  </header>
+  <p class="page-title">Dependent Two-Stage Pick-and-Place · fixed budget of 12 training tasks</p>
+
+  <!-- 2. Task at one glance -->
+  <section class="card">
+    <h2>The task at one glance</h2>
+    <p class="lead">Instruction gives o₁, o₂, and c₂ — but not c₁. Stage 2 reserves the mug, so stage 1 must avoid it.</p>
+
+    <div class="instr-row" aria-label="Observed instruction">
+      <div class="chip given"><span class="k">Object 1</span>o₁ = milk</div>
+      <div class="chip given"><span class="k">Object 2</span>o₂ = cube</div>
+      <div class="chip reserved"><span class="k">Container 2</span>c₂ = mug · reserved</div>
+      <div class="chip missing"><span class="k">Container 1</span>c₁ = ???</div>
+    </div>
+
+    <div class="contrast">
+      <div class="panel valid">
+        <div class="plabel">Valid</div>
+        <div class="mini-scene">
+          <div class="bowl-box ok">
+            <div class="name">bin</div>
+            <div class="bowl-shape"></div>
+            <div class="obj-chip o1">o₁</div>
+          </div>
+          <div class="bowl-box reserved">
+            <span class="rbadge">c₂</span>
+            <div class="name">mug</div>
+            <div class="bowl-shape"></div>
+            <div class="obj-chip o2">o₂</div>
+          </div>
+          <div class="bowl-box">
+            <div class="name">plate</div>
+            <div class="bowl-shape"></div>
+            <div class="obj-chip empty">—</div>
+          </div>
+        </div>
+        <div class="pcaption">o₁ → bin (≠ c₂). Mug stays free for o₂.</div>
+      </div>
+
+      <div class="panel viol">
+        <div class="plabel">Same-container violation</div>
+        <div class="mini-scene">
+          <div class="bowl-box">
+            <div class="name">bin</div>
+            <div class="bowl-shape"></div>
+            <div class="obj-chip empty">—</div>
+          </div>
+          <div class="bowl-box reserved">
+            <span class="rbadge">c₂</span>
+            <div class="name">mug</div>
+            <div class="bowl-shape"></div>
+            <div class="obj-chip bad">o₁</div>
+          </div>
+          <div class="bowl-box">
+            <div class="name">plate</div>
+            <div class="bowl-shape"></div>
+            <div class="obj-chip empty">—</div>
+          </div>
+        </div>
+        <div class="pcaption">o₁ took the mug reserved for o₂.</div>
+      </div>
+    </div>
+
+    <div class="task-caption">
+      <strong>Dependent pair (o₁, c₂):</strong>
+      where to put o₁ depends on which container is reserved for stage 2.
+      Training must cover these joint cases — not arbitrary pairs.
+    </div>
+  </section>
+
+  <!-- 3. Coverage at one glance -->
+  <section class="card">
+    <h2>Coverage at one glance</h2>
+    <p class="lead">4 × 3 = 12 possible (o₁, c₂) cases. Budget stays at 12 tasks; only how many relation cases appear changes.</p>
+
+    <div class="controls" aria-label="Coverage selector">
+      <label>Coverage</label>
+      <button class="cov-btn" data-idx="0" type="button">Cov4</button>
+      <button class="cov-btn" data-idx="1" type="button">Cov6</button>
+      <button class="cov-btn" data-idx="2" type="button">Cov9</button>
+      <button class="cov-btn active" data-idx="3" type="button">Cov12</button>
+    </div>
+
+    <div class="cov-row">
+      <div>
+        <div class="lattice" id="lattice" aria-label="All 12 dependent (o1, c2) cases">
+          <div></div>
+          <div class="xlab">c₂=1</div>
+          <div class="xlab">c₂=2</div>
+          <div class="xlab">c₂=3</div>
+          <div class="ylab">o₁</div>
+        </div>
+        <p class="budget-note" style="margin-top:0.45rem;text-align:center">
+          Filled cells = an illustrative spread of <strong id="latticeCount">12</strong> observed pairs for this Cov level
+          (schematic order, not the true experimental identity).
+          Ringed cell = the (milk, mug) example from the task above.
+        </p>
+      </div>
+      <div class="cov-meta">
+        <div class="meter-label">Dependent pairs observed</div>
+        <div class="meter-bar"><div class="meter-fill" id="meterFill"></div></div>
+        <div class="meter-value" id="meterValue">12 / 12</div>
+        <div class="meter-sub" id="meterSub">All relation cases appear at least once.</div>
+        <div class="meter-label">Training budget (fixed)</div>
+        <div class="budget-strip" id="budgetStrip" aria-hidden="true"></div>
+        <div class="budget-note" id="budgetNote">Always 12 tasks. Broader coverage spreads demos; sparse coverage densifies them on fewer pairs.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. Combined chart -->
+  <section class="card">
+    <h2>OOD result</h2>
+    <p class="lead">Broader dependent-pair coverage raises OOD success and lowers same-container violations.</p>
+    <div class="chart-wrap">
+      <canvas id="chartCombined"></canvas>
+      <div class="legend">
+        <div class="legend-item"><span class="swatch" style="background:#2E7D32"></span> OOD success</div>
+        <div class="legend-item"><span class="swatch" style="background:#C5582D"></span> OOD same-container violation</div>
+        <div class="legend-item"><span class="swatch" style="background:#C5582D;opacity:0.28"></span> ± SE</div>
+        <div class="legend-item"><span class="swatch" style="background:rgba(31,78,158,0.18)"></span> Selected coverage</div>
+      </div>
+    </div>
+    <p class="caveat">
+      Caveat: with a fixed budget, concentrating demos on fewer pairs can favor seen (ID) combinations.
+      Intermediate ID points are noisy — the clean signal is the OOD relational gain above.
+    </p>
+  </section>
+
+  <p class="footnote">
+    36-task Dependent 2S-PP (l4_2s_no_cont0). Means ± SE across seeds.
+    Cov4 / Cov6 / Cov9 / Cov12 keep 12 training tasks while varying observed (o₁, c₂) pairs.
+  </p>
+</div>
+
+<script>
+'use strict';
+
+const CONDITIONS = [
+  {
+    label: 'Cov4', pairs: 4,
+    oodSuccess: { mean: 1.2500, se: 1.0486 },
+    oodViol:    { mean: 36.1738, se: 1.7874 },
+    meterSub: 'Only 4 of 12 relation cases appear. Most stay OOD.',
+  },
+  {
+    label: 'Cov6', pairs: 6,
+    oodSuccess: { mean: 7.2222, se: 1.3784 },
+    oodViol:    { mean: 24.3764, se: 2.9536 },
+    meterSub: '6 of 12 relation cases appear under the same 12-task budget.',
+  },
+  {
+    label: 'Cov9', pairs: 9,
+    oodSuccess: { mean: 16.1111, se: 0.2778 },
+    oodViol:    { mean: 17.3240, se: 1.4607 },
+    meterSub: '9 of 12 relation cases appear. OOD relational errors keep falling.',
+  },
+  {
+    label: 'Cov12', pairs: 12,
+    oodSuccess: { mean: 18.4722, se: 2.7039 },
+    oodViol:    { mean: 15.6946, se: 4.5910 },
+    meterSub: 'All 12 relation cases appear at least once (orthogonal design).',
+  },
+];
+
+const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const lerp = (a, b, t) => a + (b - a) * t;
+const OBJECTS = ['milk', 'cross', 'cyl.', 'cube'];
+const CONTAINERS = ['bin', 'mug', 'plate'];
+const EXAMPLE = { r: 0, c: 1 }; // milk × mug
+
+// Fixed, spread-out reveal order (schematic — not the true experimental identity).
+// Chosen so cells light up across rows/columns rather than row-by-row.
+const REVEAL_ORDER = [
+  [0, 0], [2, 1], [1, 2], [3, 0],
+  [0, 2], [2, 0], [1, 1], [3, 2],
+  [0, 1], [2, 2], [1, 0], [3, 1],
+];
+const revealIndex = (r, c) => REVEAL_ORDER.findIndex(([rr, cc]) => rr === r && cc === c);
+
+// Lattice
+const lattice = document.getElementById('lattice');
+const latticeCells = [];
+for (let r = 0; r < 4; r++) {
+  for (let c = 0; c < 3; c++) {
+    const cell = document.createElement('div');
+    const isEx = r === EXAMPLE.r && c === EXAMPLE.c;
+    cell.className = 'lcell' + (isEx ? ' example' : '');
+    cell.dataset.reveal = revealIndex(r, c);
+    cell.title = `(o₁=${OBJECTS[r]}, c₂=${CONTAINERS[c]})`;
+    lattice.appendChild(cell);
+    latticeCells.push(cell);
+  }
+}
+
+// Budget strip
+const budgetStrip = document.getElementById('budgetStrip');
+for (let i = 0; i < 12; i++) {
+  const d = document.createElement('div');
+  d.className = 'btask';
+  budgetStrip.appendChild(d);
+}
+
+let currentIdx = 3;
+
+function setCoverage(idx) {
+  currentIdx = idx;
+  const d = CONDITIONS[idx];
+  document.getElementById('meterFill').style.width = (d.pairs / 12 * 100) + '%';
+  document.getElementById('meterValue').textContent = d.pairs + ' / 12';
+  document.getElementById('meterSub').textContent = d.meterSub;
+  document.getElementById('latticeCount').textContent = d.pairs;
+  document.getElementById('budgetNote').textContent =
+    d.pairs < 12
+      ? `Always 12 tasks. With only ${d.pairs} pairs, each seen pair gets denser demos — more cases stay OOD.`
+      : 'Always 12 tasks. All 12 relation cases appear; demos are spread across the full dependent pair set.';
+  latticeCells.forEach((cell) => {
+    cell.classList.toggle('on', Number(cell.dataset.reveal) < d.pairs);
+  });
+  document.querySelectorAll('.cov-btn').forEach((btn) => {
+    btn.classList.toggle('active', Number(btn.dataset.idx) === idx);
+  });
+}
+
+// Combined chart
+function setupCombinedChart() {
+  const canvas = document.getElementById('chartCombined');
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  if (rect.width < 10) return { draw() {} };
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const W = rect.width, H = rect.height;
+  const pad = { top: 22, right: 56, bottom: 42, left: 48 };
+  const plotW = W - pad.left - pad.right;
+  const plotH = H - pad.top - pad.bottom;
+
+  const success = CONDITIONS.map((d) => d.oodSuccess);
+  const viol = CONDITIONS.map((d) => d.oodViol);
+  const yMax = 40; // shared axis: covers 36.2 + SE
+  const N = CONDITIONS.length;
+  const segCount = N - 1;
+
+  function valueAt(series, t) {
+    if (t <= 0) return series[0];
+    if (t >= segCount) return series[N - 1];
+    const i = Math.floor(t);
+    const f = t - i;
+    return {
+      mean: lerp(series[i].mean, series[i + 1].mean, f),
+      se: lerp(series[i].se, series[i + 1].se, f),
+    };
+  }
+
+  function buildPts(series, t) {
+    const pts = [];
+    for (let i = 0; i < N; i++) {
+      if (i <= t + 1e-6) pts.push({ x: i, mean: series[i].mean, se: series[i].se, real: true });
+    }
+    if (t < segCount && Math.abs(t - Math.round(t)) > 1e-4) {
+      const v = valueAt(series, t);
+      pts.push({ x: t, mean: v.mean, se: v.se, real: false });
+    }
+    if (!pts.length) pts.push({ x: 0, mean: series[0].mean, se: series[0].se, real: true });
+    return pts;
+  }
+
+  function drawSeries(pts, color, fillColor, xToPixel, yToPixel) {
+    ctx.beginPath();
+    pts.forEach((p, i) => {
+      const px = xToPixel(p.x);
+      const py = yToPixel(Math.min(yMax, p.mean + p.se));
+      if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+    });
+    for (let i = pts.length - 1; i >= 0; i--) {
+      ctx.lineTo(xToPixel(pts[i].x), yToPixel(Math.max(0, pts[i].mean - pts[i].se)));
+    }
+    ctx.closePath();
+    ctx.fillStyle = fillColor;
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2.5;
+    ctx.lineJoin = 'round';
+    pts.forEach((p, i) => {
+      const px = xToPixel(p.x), py = yToPixel(p.mean);
+      if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+    });
+    ctx.stroke();
+
+    pts.forEach((p) => {
+      if (!p.real) return;
+      const px = xToPixel(p.x), py = yToPixel(p.mean);
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1.3;
+      ctx.beginPath();
+      ctx.moveTo(px, yToPixel(Math.min(yMax, p.mean + p.se)));
+      ctx.lineTo(px, yToPixel(Math.max(0, p.mean - p.se)));
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(px, py, 4.2, 0, Math.PI * 2);
+      ctx.fillStyle = color;
+      ctx.fill();
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 1.4;
+      ctx.stroke();
+    });
+  }
+
+  function draw(t, highlightIdx) {
+    const xToPixel = (x) => pad.left + (x / segCount) * plotW;
+    const yToPixel = (y) => pad.top + plotH - (y / yMax) * plotH;
+    ctx.clearRect(0, 0, W, H);
+
+    // Selected coverage highlight band
+    const hi = Math.round(Math.min(Math.max(highlightIdx, 0), 3));
+    const hx = xToPixel(hi);
+    const bandW = plotW / segCount * 0.55;
+    ctx.fillStyle = 'rgba(31,78,158,0.10)';
+    ctx.fillRect(hx - bandW / 2, pad.top, bandW, plotH);
+
+    // Grid
+    ctx.strokeStyle = '#e8e8e8';
+    ctx.lineWidth = 0.8;
+    for (let y = 0; y <= yMax; y += 10) {
+      ctx.beginPath();
+      ctx.moveTo(pad.left, yToPixel(y));
+      ctx.lineTo(W - pad.right, yToPixel(y));
+      ctx.stroke();
+    }
+
+    // Axes
+    ctx.strokeStyle = '#2b2b2b';
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.moveTo(pad.left, pad.top);
+    ctx.lineTo(pad.left, pad.top + plotH);
+    ctx.lineTo(W - pad.right, pad.top + plotH);
+    ctx.stroke();
+
+    // Y labels
+    ctx.fillStyle = '#444';
+    ctx.font = '11px system-ui';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    for (let y = 0; y <= yMax; y += 10) {
+      ctx.fillText(y + '%', pad.left - 7, yToPixel(y));
+    }
+
+    // X labels
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    for (let i = 0; i < N; i++) {
+      if (i <= t + 1e-6) {
+        const px = xToPixel(i);
+        ctx.fillStyle = i === hi ? '#1F4E9E' : '#444';
+        ctx.font = i === hi ? 'bold 11px system-ui' : '11px system-ui';
+        ctx.fillText(CONDITIONS[i].label, px, pad.top + plotH + 8);
+        ctx.strokeStyle = '#2b2b2b';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(px, pad.top + plotH);
+        ctx.lineTo(px, pad.top + plotH + 3);
+        ctx.stroke();
+      }
+    }
+
+    // Axis titles
+    ctx.fillStyle = '#1a1a1a';
+    ctx.font = '12px system-ui';
+    ctx.textAlign = 'center';
+    ctx.fillText('Dependent-pair coverage', pad.left + plotW / 2, H - 6);
+    ctx.save();
+    ctx.translate(13, pad.top + plotH / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.fillText('Rate (%)', 0, 0);
+    ctx.restore();
+
+    const succPts = buildPts(success, t);
+    const violPts = buildPts(viol, t);
+    drawSeries(succPts, '#2E7D32', 'rgba(46,125,50,0.12)', xToPixel, yToPixel);
+    drawSeries(violPts, '#C5582D', 'rgba(197,88,45,0.12)', xToPixel, yToPixel);
+
+    // Endpoint / tip labels
+    const tipS = succPts[succPts.length - 1];
+    const tipV = violPts[violPts.length - 1];
+    ctx.font = 'bold 11px system-ui';
+    ctx.textAlign = 'left';
+    if (tipS) {
+      ctx.fillStyle = '#2E7D32';
+      ctx.fillText(tipS.mean.toFixed(1) + '%', xToPixel(tipS.x) + 8, yToPixel(tipS.mean) - 4);
+    }
+    if (tipV) {
+      ctx.fillStyle = '#C5582D';
+      ctx.fillText(tipV.mean.toFixed(1) + '%', xToPixel(tipV.x) + 8, yToPixel(tipV.mean) + 12);
+    }
+  }
+
+  return { draw, segCount };
+}
+
+let chart = null;
+
+function renderAt(t) {
+  if (!chart) chart = setupCombinedChart();
+  const idx = Math.round(Math.min(Math.max(t, 0), 3));
+  setCoverage(idx);
+  chart.draw(t, idx);
+}
+
+document.querySelectorAll('.cov-btn').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    stopAnim();
+    played = true;
+    renderAt(Number(btn.dataset.idx));
+  });
+});
+
+let animating = false;
+let played = false;
+let rafId = null;
+let startTime = null;
+const DURATION = reduceMotion ? 1 : 5200;
+const embedded = window.parent !== window;
+if (embedded) {
+  document.documentElement.style.overflow = 'hidden';
+  document.body.style.overflow = 'hidden';
+}
+
+function stopAnim() {
+  animating = false;
+  if (rafId) cancelAnimationFrame(rafId);
+  rafId = null;
+  startTime = null;
+}
+
+function startAnim(forceComplete) {
+  if (played && !forceComplete) return;
+  played = true;
+  if (forceComplete || reduceMotion) {
+    stopAnim();
+    renderAt(3);
+    return;
+  }
+  stopAnim();
+  animating = true;
+  startTime = null;
+  rafId = requestAnimationFrame(function frame(ts) {
+    if (startTime === null) startTime = ts;
+    let g = (ts - startTime) / DURATION;
+    if (g >= 1) g = 1;
+    renderAt(lerp(0, 3, g));
+    if (g < 1 && animating) rafId = requestAnimationFrame(frame);
+    else animating = false;
+  });
+}
+
+window.addEventListener('message', (event) => {
+  if (!event.data || event.data.type !== 'cg-play') return;
+  startAnim(!!event.data.reduceMotion);
+});
+
+window.addEventListener('resize', () => {
+  chart = setupCombinedChart();
+  renderAt(currentIdx);
+});
+
+// Idle at start when embedded; play on parent signal. Standalone: autoplay.
+if (embedded) {
+  renderAt(0);
+} else {
+  startAnim(false);
+}
+</script>
+</body>
+</html>

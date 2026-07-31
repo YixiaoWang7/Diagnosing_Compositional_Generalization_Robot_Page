@@ -1,0 +1,1837 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Diagnosing Compositional Generalization in Sequential Robot Tasks</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg: #eef1f6;
+  --panel: #ffffff;
+  --text: #1f2733;
+  --text-muted: #5a6577;
+  --accent: #2f6fb0;
+  --accent-light: rgba(47,111,176,.08);
+  --amber: #c2710c;
+  --border: rgba(0,0,0,.08);
+  --border-strong: #dfe4ec;
+  --radius: 10px;
+  --shadow: 0 4px 24px rgba(0,0,0,.06);
+  --max-w: 1080px;
+
+  /* Shared data-series palette — read by the figure scripts via window.CG.colors,
+     so the swatches below and the canvas strokes cannot drift apart. */
+  --series-id: #2E7D32;
+  --series-ood: #C5582D;
+  --series-blue: #1F4E9E;
+  --series-before: #b0b7c3;
+  --series-grid: #e6e9ef;
+  --series-axis: #3a4453;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+.container {
+  max-width: var(--max-w);
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* Hero */
+.hero {
+  text-align: center;
+  padding: 72px 24px 48px;
+}
+.hero h1 {
+  font-size: clamp(1.5rem, 4vw, 2.1rem);
+  font-weight: 700;
+  line-height: 1.3;
+  margin-bottom: 16px;
+  color: var(--text);
+}
+.hero .authors {
+  font-size: 15px;
+  color: var(--text-muted);
+  margin-bottom: 24px;
+}
+.hero .links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+.hero .links a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 18px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  color: var(--accent);
+  border: 1px solid rgba(47,111,176,.3);
+  background: var(--panel);
+  transition: background .15s, border-color .15s;
+}
+.hero .links a:hover {
+  background: var(--accent-light);
+  border-color: var(--accent);
+}
+
+/* Sections */
+section {
+  margin-bottom: 56px;
+}
+section h2 {
+  font-size: 1.35rem;
+  font-weight: 700;
+  margin-bottom: 16px;
+  color: var(--text);
+}
+section h3 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin: 20px 0 8px;
+  color: var(--text);
+}
+
+/* Figure placeholder */
+.figure-placeholder {
+  background: var(--panel);
+  border: 1px dashed rgba(0,0,0,.15);
+  border-radius: var(--radius);
+  padding: 48px 24px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 13px;
+  margin: 20px 0;
+}
+
+/* TL;DR stat cards */
+.tldr-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin: 24px 0;
+}
+.stat-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px 16px;
+  text-align: center;
+}
+.stat-card .number {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--accent);
+  margin-bottom: 6px;
+}
+.stat-card .number.amber { color: var(--amber); }
+.stat-card .label {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+/* Abstract panel */
+.abstract-panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 28px 32px;
+  font-size: 14.5px;
+  line-height: 1.8;
+}
+
+/* Viewer iframe — constrained to the same column as every other block */
+.viewer-frame {
+  position: relative;
+  width: 100%;
+  height: 80vh;
+  min-height: 560px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+.viewer-frame iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+}
+.viewer-header {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 8px;
+}
+.viewer-header a {
+  font-size: 12px;
+  color: var(--accent);
+  text-decoration: none;
+  border-bottom: 1px dashed var(--accent);
+}
+.section-lead {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Inline figures (Q1–Q3)
+
+   Each figure's markup, CSS, and canvas script are inlined from q1/, q2/, q3/
+   so the page renders with no iframes and no cross-origin height measurement.
+   Every rule below is scoped to #q1 / #q2 / #q3 because the source pages share
+   class names (.legend, .controls, .footnote, .card) that would otherwise clash.
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.exp { margin-bottom: 48px; }
+.exp > h3 { margin-top: 0; }
+.exp .fig-caption {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 18px;
+}
+
+/* Shared card surface for all three figures */
+#q1 .chart-panel,
+#q2 .chart-container,
+#q3 .card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+#q1 .chart-panel h4,
+#q2 .chart-container h4,
+#q3 .card h4 {
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 2px;
+  color: var(--text);
+  line-height: 1.4;
+}
+#q1 .chart-desc,
+#q2 .chart-desc,
+#q3 .lead {
+  font-size: 12.5px;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin-bottom: 14px;
+}
+
+/* Shared legend */
+.exp .legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  justify-content: center;
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+.exp .legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.exp .legend-swatch,
+.exp .swatch {
+  width: 13px;
+  height: 13px;
+  border-radius: 3px;
+  flex: none;
+}
+
+/* Shared small print */
+.exp .takeaway,
+.exp .caveat,
+.exp .footnote,
+.exp .budget-note {
+  text-align: center;
+  color: var(--text-muted);
+  line-height: 1.55;
+  margin-left: auto;
+  margin-right: auto;
+}
+.exp .takeaway {
+  font-size: 13.5px;
+  color: var(--text);
+  max-width: 660px;
+  margin-top: 18px;
+}
+.exp .takeaway strong { color: var(--series-blue); }
+.exp .caveat {
+  font-size: 12.5px;
+  max-width: 720px;
+  margin-top: 12px;
+}
+.exp .footnote {
+  font-size: 12px;
+  max-width: 720px;
+  margin-top: 12px;
+  opacity: .85;
+}
+
+/* ── Q1 ── */
+#q1 .legend { margin-bottom: 16px; }
+#q1 .controls {
+  text-align: center;
+  margin: 0 auto 20px;
+  max-width: 600px;
+}
+#q1 .controls label {
+  font-size: 13px;
+  font-weight: 500;
+  margin-right: 8px;
+  color: var(--text-muted);
+}
+#q1 .controls input[type="range"] {
+  width: 55%;
+  vertical-align: middle;
+  accent-color: var(--series-blue);
+}
+#q1 .controls .b-label {
+  display: inline-block;
+  min-width: 8rem;
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--series-blue);
+  text-align: left;
+}
+#q1 .charts-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: center;
+}
+#q1 .chart-panel {
+  padding: 18px 20px;
+  flex: 1 1 440px;
+  max-width: 540px;
+  min-width: 300px;
+}
+#q1 canvas {
+  width: 100%;
+  height: 320px;
+  display: block;
+}
+
+/* ── Q2 ── */
+#q2 .legend { margin-bottom: 18px; }
+#q2 .chart-container {
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 20px 22px;
+}
+#q2 canvas {
+  width: 100%;
+  height: 400px;
+  display: block;
+}
+
+/* ── Q3 ── */
+#q3 .card {
+  padding: 18px 20px 20px;
+  margin-bottom: 16px;
+}
+
+/* Robot rollout figure — the source image is annotated on black, so the frame
+   matches that rather than fighting it with a white surround. */
+#q3 .task-figure {
+  margin: 0 0 12px;
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: #000;
+  line-height: 0;
+}
+#q3 .task-figure img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+#q3 .task-caption {
+  margin-top: 12px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--text);
+  background: #e8eef8;
+  border-radius: 8px;
+  padding: 9px 13px;
+  line-height: 1.55;
+}
+#q3 .task-caption strong { color: var(--series-blue); }
+
+/* Coverage lattice + meters */
+#q3 .controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  margin-bottom: 14px;
+}
+#q3 .controls label {
+  font-size: 13px;
+  font-weight: 650;
+  margin-right: 2px;
+}
+#q3 .cov-btn {
+  font-family: inherit;
+  border: 1.5px solid #d0d5dd;
+  background: var(--panel);
+  color: var(--text);
+  border-radius: 7px;
+  padding: 5px 11px;
+  font-size: 13px;
+  font-weight: 650;
+  cursor: pointer;
+  transition: border-color .15s, color .15s, background .15s;
+}
+#q3 .cov-btn:hover { border-color: var(--series-blue); color: var(--series-blue); }
+#q3 .cov-btn.active {
+  background: var(--series-blue);
+  border-color: var(--series-blue);
+  color: #fff;
+}
+#q3 .cov-row {
+  display: grid;
+  grid-template-columns: minmax(200px, 240px) 1fr;
+  gap: 22px;
+  align-items: center;
+}
+#q3 .lattice {
+  display: grid;
+  grid-template-columns: 22px repeat(3, 1fr);
+  gap: 4px;
+  align-items: center;
+}
+#q3 .lattice .xlab, #q3 .lattice .ylab {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-align: center;
+}
+#q3 .lattice .ylab {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  grid-row: span 4;
+}
+#q3 .lcell {
+  aspect-ratio: 1;
+  border-radius: 5px;
+  border: 1.5px solid #d8dde6;
+  background: var(--bg);
+  transition: background .3s, border-color .3s;
+}
+#q3 .lcell.on {
+  background: var(--series-blue);
+  border-color: var(--series-blue);
+}
+#q3 .lcell.example { box-shadow: inset 0 0 0 2px var(--series-ood); }
+#q3 .meter-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  margin-bottom: 5px;
+}
+#q3 .meter-bar {
+  height: 12px;
+  border-radius: 999px;
+  background: #e6ebf3;
+  overflow: hidden;
+  margin-bottom: 5px;
+}
+#q3 .meter-fill {
+  height: 100%;
+  background: var(--series-blue);
+  border-radius: 999px;
+  width: 100%;
+  transition: width .35s ease;
+}
+#q3 .meter-value {
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--series-blue);
+  line-height: 1.3;
+}
+#q3 .meter-sub {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin: 2px 0 12px;
+}
+#q3 .budget-strip {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 3px;
+  max-width: 280px;
+}
+#q3 .btask {
+  aspect-ratio: 1;
+  border-radius: 3px;
+  background: var(--series-blue);
+  opacity: .85;
+}
+#q3 .budget-note {
+  font-size: 12px;
+  margin-top: 6px;
+  max-width: none;
+}
+
+/* Chart */
+#q3 .chart-wrap {
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  padding: 10px 12px 8px;
+  background: var(--panel);
+}
+#q3 canvas {
+  width: 100%;
+  height: 300px;
+  display: block;
+}
+#q3 .chart-wrap .legend { margin-top: 8px; }
+
+/* Citation */
+.bibtex-block {
+  position: relative;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px 24px;
+  overflow-x: auto;
+}
+.bibtex-block pre {
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: 12.5px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  color: var(--text);
+}
+.bibtex-block .copy-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  padding: 4px 12px;
+  border-radius: 5px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  font-family: inherit;
+  font-size: 11px;
+  cursor: pointer;
+  color: var(--text-muted);
+}
+.bibtex-block .copy-btn:hover { color: var(--accent); border-color: var(--accent); }
+
+/* Footer */
+footer {
+  text-align: center;
+  padding: 32px 24px 48px;
+  font-size: 12px;
+  color: var(--text-muted);
+  border-top: 1px solid var(--border);
+}
+footer a { color: var(--accent); text-decoration: none; }
+
+/* Responsive */
+@media (max-width: 760px) {
+  #q3 .cov-row { grid-template-columns: 1fr; }
+  #q3 canvas { height: 260px; }
+}
+@media (max-width: 600px) {
+  .hero { padding: 48px 16px 32px; }
+  .abstract-panel { padding: 20px 18px; }
+  .viewer-frame { height: 70vh; min-height: 420px; }
+  .tldr-strip { grid-template-columns: 1fr; }
+  #q1 .controls input[type="range"] { width: 100%; }
+  #q1 .controls .b-label { display: block; margin: 6px auto 0; text-align: center; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #q3 .meter-fill, #q3 .lcell { transition: none !important; }
+}
+</style>
+</head>
+<body>
+
+<!-- Hero -->
+<header class="hero">
+  <div class="container">
+    <h1>Diagnosing Compositional Generalization in Sequential Robot Tasks</h1>
+    <p class="authors">Anonymous Author(s)</p>
+    <div class="links">
+      <a href="paper.pdf" target="_blank">Paper (PDF)</a>
+      <a href="#">Code</a>
+      <a href="#">Dataset</a>
+      <a href="#">Supplementary</a>
+    </div>
+  </div>
+</header>
+
+<!-- Teaser Figure -->
+<section class="container">
+  <div class="figure-placeholder">
+    <strong>Figure 1</strong> &mdash; Illustration of Pick-Place-Press (PPP) and Dependent Two-Stage Pick-and-Place (2S-PP) tasks.<br>
+    <em>[Teaser figure placeholder]</em>
+  </div>
+</section>
+
+<!-- TL;DR -->
+<section class="container">
+  <h2>TL;DR</h2>
+  <p>Full tuple coverage is unnecessary. Structured sparse subsets can recover strong OOD performance when they cover action-relevant dependencies.</p>
+  <div class="tldr-strip">
+    <div class="stat-card">
+      <div class="number">1/4</div>
+      <div class="label">of task space sufficient<br>(orthogonal set)</div>
+    </div>
+    <div class="stat-card">
+      <div class="number amber">0.4% &rarr; 54.7%</div>
+      <div class="label">OOD success after<br>1-demo-per-task finetune</div>
+    </div>
+    <div class="stat-card">
+      <div class="number">78.2%</div>
+      <div class="label">OOD success from<br>orthogonal training set</div>
+    </div>
+  </div>
+</section>
+
+<!-- Abstract -->
+<section class="container">
+  <h2>Abstract</h2>
+  <div class="abstract-panel">
+    Sequential robot manipulation requires policies to execute novel combinations of familiar instruction components. However, collecting demonstrations for all possible instruction tuples is combinatorially expensive, while sparsely covered datasets often fail under out-of-distribution recombination. This paper studies compositional generalization through the lens of instruction-space coverage. We decompose the generalization gap into three sources: marginal instruction shift, instruction-compositional shift, and context&ndash;action shift. Our results show that exhaustive tuple enumeration is unnecessary: a structured subset, as small as one quarter of the full task space, can recover strong out-of-distribution performance when it covers action-relevant dependencies.
+  </div>
+</section>
+
+<!-- Approach / Theory -->
+<section class="container">
+  <h2>Approach: Decomposing the Generalization Gap</h2>
+  <p>We bound the compositional generalization gap by three terms, each with a different interpretation and controllability.</p>
+
+  <h3>1. Marginal Instruction Shift</h3>
+  <p>Whether individual subtask instructions are covered by training. This is a data issue resolvable only by expanding training support.</p>
+
+  <h3>2. Instruction-Compositional Shift</h3>
+  <p>Whether familiar subtasks are recombined in unfamiliar ways at test time. Pairwise coverage in the training set controls this term.</p>
+
+  <h3>3. Context&ndash;Action Shift</h3>
+  <p>The residual shift in context&ndash;action behavior when the policy is overly sensitive to irrelevant instruction correlations.</p>
+
+  <h3>Stage-wise Modular Policy</h3>
+  <p>A modular policy that conditions only on the active subtask removes the explicit instruction-compositional term from the bound.</p>
+
+  <div class="figure-placeholder">
+    <strong>Figure 2</strong> &mdash; Theoretical decomposition and stage-wise modular policy illustration.<br>
+    <em>[Theory figure placeholder]</em>
+  </div>
+</section>
+
+<!-- Interactive Results Viewer -->
+<section class="container" id="viewer">
+  <div class="viewer-header">
+    <h2>Interactive Pick-Place-Press Results</h2>
+    <a href="Pick_Place_Press_Full_Results.html" target="_blank">Open full screen &nearr;</a>
+  </div>
+  <p class="section-lead">Explore per-task success rates across the 4&times;4&times;4 instruction cube. Rotate, filter by ID/OOD, and hover for details.</p>
+  <div class="viewer-frame">
+    <iframe src="Pick_Place_Press_Full_Results.html" title="PPP Interactive Results" loading="lazy"></iframe>
+  </div>
+</section>
+
+<!-- Experiments -->
+<section class="container">
+  <h2>Experiments</h2>
+
+  <!-- ── Q1 ───────────────────────────────────────────────────────────────── -->
+  <div class="exp" id="q1">
+    <h3>Q1: Is Full Tuple Coverage Necessary?</h3>
+    <p>Small training sets with full marginal coverage still yield poor OOD success. However, full tuple coverage is also unnecessary &mdash; PP saturates at B=8, PPP at B=16, far below the full Cartesian products.</p>
+    <p class="fig-caption">Success rate vs. training budget B &middot; <a href="q1/index.html" target="_blank" style="color:var(--accent);text-decoration:none;border-bottom:1px dashed var(--accent)">open standalone &nearr;</a></p>
+
+    <div class="legend">
+      <div class="legend-item"><div class="legend-swatch" style="background:var(--series-id)"></div> In-distribution (ID)</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:var(--series-ood)"></div> Out-of-distribution (OOD)</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:var(--series-ood);opacity:.3"></div> &plusmn; SEM band</div>
+    </div>
+
+    <div class="controls">
+      <label for="bSlider">Reveal progress</label>
+      <input type="range" id="bSlider" min="0" max="1000" step="1" value="0">
+      <span class="b-label" id="bDisplay">&mdash;</span>
+    </div>
+
+    <div class="charts-container">
+      <div class="chart-panel">
+        <h4>Pick and Place and Press</h4>
+        <canvas id="chartL5"></canvas>
+      </div>
+      <div class="chart-panel">
+        <h4>Pick and Place</h4>
+        <canvas id="chartL4"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Q2 ───────────────────────────────────────────────────────────────── -->
+  <div class="exp" id="q2">
+    <h3>Q2: What Is Missing When Sparse Coverage Fails?</h3>
+    <p>Diagonal pretraining learns reusable subtask skills but not instruction steering. Finetuning with only one demonstration per task improves OOD success from 0.4% to 54.7%.</p>
+    <p class="fig-caption">OOD = tasks never seen during pretraining &middot; +1 demo/instruction = one demonstration for each of the 64 task instructions &middot; <a href="q2/index.html" target="_blank" style="color:var(--accent);text-decoration:none;border-bottom:1px dashed var(--accent)">open standalone &nearr;</a></p>
+
+    <div class="legend">
+      <div class="legend-item"><div class="legend-swatch" style="background:var(--series-before)"></div> Pretrained only (OOD)</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:var(--series-blue)"></div> + 1 demo / instruction (OOD)</div>
+    </div>
+
+    <div class="chart-container">
+      <h4>OOD Success: Before vs. After 1-Demo Finetuning</h4>
+      <p class="chart-desc">L5 Pick &amp; Place (64 tasks) &mdash; pretrained on B sparse diagonal tasks, then finetuned with 1 demo per instruction</p>
+      <canvas id="chart"></canvas>
+    </div>
+
+    <p class="takeaway"><strong>Takeaway:</strong> Even with as few as 4 pretraining tasks, one demonstration per instruction is enough to jump from near-zero to &gt;50% OOD success &mdash; the skills were already there.</p>
+    <p class="footnote">* B=8 baseline uses a single-seed evaluation (no 3-seed pooled baseline available for that checkpoint).</p>
+  </div>
+
+  <!-- ── Q3 ───────────────────────────────────────────────────────────────── -->
+  <div class="exp" id="q3">
+    <h3>Q3: What Coverage Is Needed for Dependent Instructions?</h3>
+    <p>Here the two halves of the instruction depend on each other: the robot is told where the <em>second</em> object goes, and must work out where the <em>first</em> one goes. Covering more of those joint cases in training is what improves OOD success.</p>
+    <p class="fig-caption">Dependent Two-Stage Pick-and-Place &middot; fixed budget of 12 training tasks &middot; <a href="q3/index.html" target="_blank" style="color:var(--accent);text-decoration:none;border-bottom:1px dashed var(--accent)">open standalone &nearr;</a></p>
+
+    <!-- The task -->
+    <div class="card">
+      <h4>The task</h4>
+      <p class="lead">
+        The instruction is <em>&ldquo;put the cube away, then put the milk on the plate.&rdquo;</em>
+        It never says where the cube goes &mdash; but because the plate is reserved for the milk,
+        the cube may go anywhere <strong>except the plate</strong>.
+      </p>
+
+      <figure class="task-figure">
+        <img src="fig_2spp.png"
+             alt="Three frames of a robot arm. Step 1: pick up the cube — blue arrows point to the purple cup, red cup and box as valid destinations, a red arrow to the plate is crossed out. Step 2: pick up the milk. Step 3: place the milk to the plate. A red arrow loops back to step 1, labelled 'plate!', showing that the stage-2 target constrains stage 1."
+             loading="lazy">
+      </figure>
+
+      <div class="task-caption">
+        <strong>Why it is &ldquo;dependent&rdquo;:</strong>
+        the right place for the cube is only defined once you know the milk needs the plate.
+        Change the milk's destination and the cube's valid destinations change with it &mdash; so
+        training has to cover these <em>object&ndash;destination combinations</em>, not just each
+        object and each container separately.
+      </div>
+    </div>
+
+    <!-- Coverage -->
+    <div class="card">
+      <h4>How much of the combination space training sees</h4>
+      <p class="lead">
+        4 first objects &times; 3 reserved destinations = 12 combinations in total.
+        Every condition below trains on the same 12 demonstrations &mdash; only the number of
+        <em>distinct</em> combinations they cover changes.
+      </p>
+
+      <div class="controls" aria-label="Coverage selector">
+        <label>Combinations covered</label>
+        <button class="cov-btn" data-idx="0" type="button">4 of 12</button>
+        <button class="cov-btn" data-idx="1" type="button">6 of 12</button>
+        <button class="cov-btn" data-idx="2" type="button">9 of 12</button>
+        <button class="cov-btn active" data-idx="3" type="button">12 of 12</button>
+      </div>
+
+      <div class="cov-row">
+        <div>
+          <div class="lattice" id="lattice" aria-label="The 12 first-object by reserved-destination combinations">
+            <div></div>
+            <div class="xlab">plate</div>
+            <div class="xlab">mug</div>
+            <div class="xlab">bin</div>
+            <div class="ylab">first object</div>
+          </div>
+          <p class="budget-note" style="margin-top:8px">
+            Rows are the first object (cube, cross, cylinder, milk); columns are the destination
+            reserved for the second object. <strong id="latticeCount">12</strong> filled =
+            covered by training.
+            The ringed cell is the cube&nbsp;&times;&nbsp;plate case from the figure above.
+            <span style="display:block;margin-top:4px;opacity:.8">Which cells fill is illustrative, not the exact experimental set.</span>
+          </p>
+        </div>
+        <div class="cov-meta">
+          <div class="meter-label">Combinations seen in training</div>
+          <div class="meter-bar"><div class="meter-fill" id="meterFill"></div></div>
+          <div class="meter-value" id="meterValue">12 / 12</div>
+          <div class="meter-sub" id="meterSub">Every combination appears at least once.</div>
+          <div class="meter-label">Demonstrations (same for every condition)</div>
+          <div class="budget-strip" id="budgetStrip" aria-hidden="true"></div>
+          <div class="budget-note" id="budgetNote" style="text-align:left">Always 12 demos, spread across all 12 combinations.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Result chart -->
+    <div class="card" id="q3Result">
+      <h4>Result on unseen combinations</h4>
+      <p class="lead">
+        Wider coverage more than doubles success on held-out combinations, and the robot picks the
+        wrong container less often when it does act.
+      </p>
+      <div class="chart-wrap">
+        <canvas id="chartCombined"></canvas>
+        <div class="legend">
+          <div class="legend-item"><span class="swatch" style="background:var(--series-id)"></span> Task success</div>
+          <div class="legend-item"><span class="swatch" style="background:var(--series-ood)"></span> Used the reserved container by mistake</div>
+          <div class="legend-item"><span class="swatch" style="background:var(--series-ood);opacity:.28"></span> &plusmn; SE</div>
+          <div class="legend-item"><span class="swatch" style="background:rgba(31,78,158,.18)"></span> Selected coverage</div>
+        </div>
+      </div>
+      <p class="caveat">
+        Both measured on held-out combinations only. The mistake rate is counted among the attempts
+        where the robot actually put the first object down, so it isolates <em>choosing the wrong
+        container</em> from simply failing to grasp.
+      </p>
+    </div>
+
+    <p class="footnote">
+      36-task Dependent 2S-PP (l4_2s_no_cont0). Mean ± SE across training seeds.
+      For reference, training on all 36 tasks reaches 37.4% success with a 5.6% mistake rate.
+    </p>
+  </div>
+</section>
+
+<!-- Citation -->
+<section class="container">
+  <h2>Citation</h2>
+  <div class="bibtex-block">
+    <button class="copy-btn" onclick="navigator.clipboard.writeText(this.nextElementSibling.textContent)">Copy</button>
+    <pre>@inproceedings{anonymous2026compositional,
+  title     = {Diagnosing Compositional Generalization in Sequential Robot Tasks},
+  author    = {Anonymous},
+  year      = {2026}
+}</pre>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer>
+  <div class="container">
+    Template inspired by academic project pages. &middot; <a href="#">Back to top</a>
+  </div>
+</footer>
+
+<!-- ─── Shared figure prelude ─────────────────────────────────────────────────
+     Pulls the series palette out of the CSS custom properties so the canvas
+     strokes and the HTML swatches share one definition, and exposes the
+     registry that each figure opts into for its play-once-on-scroll trigger. -->
+<script>
+window.CG = (function () {
+  const css = getComputedStyle(document.documentElement);
+  const v = (name) => css.getPropertyValue(name).trim();
+
+  function alpha(hex, a) {
+    const h = hex.replace('#', '');
+    const n = h.length === 3
+      ? h.split('').map((c) => c + c).join('')
+      : h;
+    const r = parseInt(n.slice(0, 2), 16);
+    const g = parseInt(n.slice(2, 4), 16);
+    const b = parseInt(n.slice(4, 6), 16);
+    return 'rgba(' + r + ',' + g + ',' + b + ',' + a + ')';
+  }
+
+  const colors = {
+    id: v('--series-id') || '#2E7D32',
+    ood: v('--series-ood') || '#C5582D',
+    blue: v('--series-blue') || '#1F4E9E',
+    before: v('--series-before') || '#b0b7c3',
+    grid: v('--series-grid') || '#e6e9ef',
+    axis: v('--series-axis') || '#3a4453',
+    text: v('--text') || '#1f2733',
+    label: v('--text-muted') || '#5a6577',
+  };
+
+  return { colors: colors, alpha: alpha, figures: [] };
+})();
+</script>
+
+<!-- ─── Q1: success rate vs. training budget B ──────────────────────────────── -->
+<script>
+(function () {
+  const root = document.getElementById('q1');
+  const C = window.CG.colors;
+  const A = window.CG.alpha;
+
+  const dataL5 = {
+    bValues: [4, 6, 7, 8, 10, 12, 16, 20, 24, 64],
+    id:  { mean: [83.3333,84.6296,83.3333,83.6111,84.3333,80.6481,81.8750,81.6667,81.3426,78.6458],
+           sem:  [5.8333,3.0316,2.1473,1.7067,2.4037,1.2143,1.7347,1.4175,2.8252,1.3985] },
+    ood: { mean: [0.3889,6.2261,25.4191,32.4206,51.2346,64.3803,73.7731,75.9848,76.1944,78.6458],
+           sem:  [0.2422,0.5187,5.1743,1.0197,12.4504,6.7294,2.8656,3.0795,1.3345,1.3985] },
+  };
+
+  const dataL4 = {
+    bValues: [4, 5, 6, 7, 8, 10, 16],
+    id:  { mean: [82.0000,77.8667,76.4444,71.9365,73.4444,74.3556,73.5000],
+           sem:  [0,2.1554,2.4977,0.9979,1.4699,3.1273,3.9870] },
+    ood: { mean: [3.6700,7.7980,31.1556,58.8148,66.7778,69.1111,73.5000],
+           sem:  [0,2.3445,4.5525,4.3268,2.6428,1.7261,3.9870] },
+  };
+
+  const lerp = (a, b, t) => a + (b - a) * t;
+
+  function setupChart(canvas, data) {
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    if (rect.width < 10) return null;
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    const ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const W = rect.width, H = rect.height;
+
+    // left leaves room for the tick labels *and* the rotated axis title beside them
+    const pad = { top: 20, right: 34, bottom: 48, left: 64 };
+    const plotW = W - pad.left - pad.right;
+    const plotH = H - pad.top - pad.bottom;
+
+    const B = data.bValues;
+    const N = B.length;
+    const maxB = B[N - 1];
+    // Animation "stops": start at the first data point's B, then pass through the rest.
+    const stops = [...B];
+    const segCount = stops.length - 1;
+    const yMin = 0, yMax = 100;
+
+    // Map global progress g∈[0,1] to a continuous x frontier for this chart.
+    function curXAt(g) {
+      const localP = Math.max(0, Math.min(g, 1)) * segCount;
+      const seg = Math.min(Math.floor(localP), segCount - 1);
+      const frac = localP - seg;
+      return lerp(stops[seg], stops[seg + 1], frac);
+    }
+
+    // Interpolate a series' value along the data polyline at arbitrary x.
+    function valueAt(series, x) {
+      if (x <= B[0]) return { mean: series.mean[0], sem: series.sem[0] };
+      if (x >= maxB) return { mean: series.mean[N - 1], sem: series.sem[N - 1] };
+      for (let i = 0; i < N - 1; i++) {
+        if (x >= B[i] && x <= B[i + 1]) {
+          const t = (x - B[i]) / (B[i + 1] - B[i]);
+          return { mean: lerp(series.mean[i], series.mean[i + 1], t),
+                   sem: lerp(series.sem[i], series.sem[i + 1], t) };
+        }
+      }
+      return { mean: series.mean[N - 1], sem: series.sem[N - 1] };
+    }
+
+    function draw(curX) {
+      const xMin = B[0];
+      const axisMax = Math.max(curX, xMin);
+      const xSpan = Math.max(axisMax - xMin, 1e-6);
+      const xToPixel = (x) => pad.left + ((x - xMin) / xSpan) * plotW;
+      const yToPixel = (y) => pad.top + plotH - ((y - yMin) / (yMax - yMin)) * plotH;
+
+      ctx.clearRect(0, 0, W, H);
+
+      // Horizontal grid (y axis full 0–100 from the start)
+      ctx.strokeStyle = C.grid;
+      ctx.lineWidth = 0.8;
+      for (let y = 0; y <= 100; y += 20) {
+        ctx.beginPath();
+        ctx.moveTo(pad.left, yToPixel(y));
+        ctx.lineTo(W - pad.right, yToPixel(y));
+        ctx.stroke();
+      }
+
+      // Axes
+      ctx.strokeStyle = C.axis;
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(pad.left, pad.top);
+      ctx.lineTo(pad.left, pad.top + plotH);
+      ctx.lineTo(W - pad.right, pad.top + plotH);
+      ctx.stroke();
+
+      // Y labels
+      ctx.fillStyle = C.label;
+      ctx.font = '11px Inter, system-ui, sans-serif';
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'middle';
+      for (let y = 0; y <= 100; y += 20) {
+        ctx.fillText(y + '%', pad.left - 8, yToPixel(y));
+      }
+
+      // X labels: each revealed B value, skipping ones that would overlap.
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      ctx.fillStyle = C.label;
+      let lastLabelX = -Infinity;
+      const drawXLabel = (val) => {
+        const px = xToPixel(val);
+        if (px - lastLabelX < 24) return;
+        lastLabelX = px;
+        ctx.fillText(val, px, pad.top + plotH + 8);
+        ctx.strokeStyle = C.axis;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(px, pad.top + plotH);
+        ctx.lineTo(px, pad.top + plotH + 4);
+        ctx.stroke();
+      };
+      for (let i = 0; i < N; i++) {
+        if (B[i] <= curX + 1e-6) drawXLabel(B[i]);
+      }
+
+      // Axis titles — reset the baseline first; the x-label loop above left it 'top',
+      // which pushed this text past the bottom edge of the canvas.
+      ctx.fillStyle = C.text;
+      ctx.font = '12px Inter, system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'alphabetic';
+      ctx.fillText('B (number of training tasks)', pad.left + plotW / 2, H - 6);
+      ctx.save();
+      ctx.translate(13, pad.top + plotH / 2);
+      ctx.rotate(-Math.PI / 2);
+      ctx.textBaseline = 'middle';
+      ctx.fillText('Success rate (%)', 0, 0);
+      ctx.restore();
+
+      if (curX < B[0]) return; // nothing to draw yet, axis is still growing
+
+      // Build the revealed polyline points (real data points + moving frontier).
+      function buildPoints(series) {
+        const pts = [];
+        for (let i = 0; i < N; i++) {
+          if (B[i] <= curX + 1e-6) {
+            pts.push({ x: B[i], mean: series.mean[i], sem: series.sem[i], real: true });
+          }
+        }
+        if (curX < maxB) {
+          const v = valueAt(series, curX);
+          pts.push({ x: curX, mean: v.mean, sem: v.sem, real: false });
+        }
+        return pts;
+      }
+
+      function drawCurve(series, color, fillColor) {
+        const pts = buildPoints(series);
+        if (pts.length === 0) return;
+
+        // SEM band
+        ctx.beginPath();
+        pts.forEach((p, i) => {
+          const px = xToPixel(p.x);
+          const py = yToPixel(Math.min(100, p.mean + p.sem));
+          if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+        });
+        for (let i = pts.length - 1; i >= 0; i--) {
+          const px = xToPixel(pts[i].x);
+          const py = yToPixel(Math.max(0, pts[i].mean - pts[i].sem));
+          ctx.lineTo(px, py);
+        }
+        ctx.closePath();
+        ctx.fillStyle = fillColor;
+        ctx.fill();
+
+        // Line
+        ctx.beginPath();
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2.5;
+        ctx.lineJoin = 'round';
+        ctx.lineCap = 'round';
+        pts.forEach((p, i) => {
+          const px = xToPixel(p.x);
+          const py = yToPixel(p.mean);
+          if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+        });
+        ctx.stroke();
+
+        // Markers at real data points only
+        pts.forEach((p) => {
+          if (!p.real) return;
+          const px = xToPixel(p.x), py = yToPixel(p.mean);
+          ctx.beginPath();
+          ctx.arc(px, py, 4.5, 0, Math.PI * 2);
+          ctx.fillStyle = color;
+          ctx.fill();
+          ctx.strokeStyle = '#fff';
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+        });
+
+        return pts[pts.length - 1];
+      }
+
+      const idTip = drawCurve(data.id, C.id, A(C.id, 0.12));
+      const oodTip = drawCurve(data.ood, C.ood, A(C.ood, 0.12));
+
+      // Frontier value annotations
+      ctx.font = '700 11px Inter, system-ui, sans-serif';
+      ctx.textAlign = 'left';
+      if (idTip) {
+        ctx.fillStyle = C.id;
+        ctx.fillText(idTip.mean.toFixed(1) + '%', xToPixel(idTip.x) + 8, yToPixel(idTip.mean) - 2);
+      }
+      if (oodTip) {
+        ctx.fillStyle = C.ood;
+        ctx.fillText(oodTip.mean.toFixed(1) + '%', xToPixel(oodTip.x) + 8, yToPixel(oodTip.mean) + 12);
+      }
+    }
+
+    return { draw, curXAt, maxB };
+  }
+
+  const slider = root.querySelector('#bSlider');
+  const display = root.querySelector('#bDisplay');
+  const canvasL5 = root.querySelector('#chartL5');
+  const canvasL4 = root.querySelector('#chartL4');
+  let chartL5 = null, chartL4 = null;
+
+  function render(g) {
+    if (!chartL5 || !chartL4) return;
+    const xL5 = chartL5.curXAt(g);
+    const xL4 = chartL4.curXAt(g);
+    chartL5.draw(xL5);
+    chartL4.draw(xL4);
+    display.textContent = 'L5 B≈' + Math.round(xL5) + ' · L4 B≈' + Math.round(xL4);
+  }
+
+  function init() {
+    chartL5 = setupChart(canvasL5, dataL5);
+    chartL4 = setupChart(canvasL4, dataL4);
+  }
+
+  init();
+  render(0);
+
+  const DURATION = 7000;
+  let animating = false;
+  let played = false;
+  let rafId = null;
+  let startTime = null;
+
+  function frame(ts) {
+    if (startTime === null) startTime = ts;
+    let g = (ts - startTime) / DURATION;
+    if (g >= 1) g = 1;
+    slider.value = Math.round(g * 1000);
+    render(g);
+    if (g < 1 && animating) {
+      rafId = requestAnimationFrame(frame);
+    } else {
+      animating = false;
+    }
+  }
+
+  function stopAnim() {
+    animating = false;
+    if (rafId) cancelAnimationFrame(rafId);
+    rafId = null;
+    startTime = null;
+  }
+
+  function startAnim(forceComplete) {
+    if (played && !forceComplete) return;
+    played = true;
+    if (forceComplete) {
+      stopAnim();
+      slider.value = 1000;
+      render(1);
+      return;
+    }
+    stopAnim();
+    animating = true;
+    startTime = null;
+    rafId = requestAnimationFrame(frame);
+  }
+
+  slider.addEventListener('input', () => {
+    stopAnim();
+    played = true;
+    render(parseInt(slider.value, 10) / 1000);
+  });
+
+  window.addEventListener('resize', () => {
+    init();
+    render(parseInt(slider.value, 10) / 1000);
+  });
+
+  window.CG.figures.push({ watch: root.querySelector('.charts-container'), play: startAnim });
+})();
+</script>
+
+<!-- ─── Q2: OOD success before vs. after 1-demo finetuning ──────────────────── -->
+<script>
+(function () {
+  const root = document.getElementById('q2');
+  const C = window.CG.colors;
+
+  const groups = [
+    { label: 'B = 4', before: 0.39, after: 54.67, delta: 54.28 },
+    { label: 'B = 6', before: 16.55, after: 57.70, delta: 41.15 },
+    { label: 'B = 8*', before: 28.04, after: 68.33, delta: 40.30 },
+  ];
+
+  const COLOR_BEFORE = C.before;
+  const COLOR_AFTER = C.blue;
+  const COLOR_ARROW = C.ood;
+
+  const canvas = root.querySelector('#chart');
+  let ctx, W, H;
+  // left fits the tick labels plus the rotated axis title beside them
+  const pad = { top: 30, right: 30, bottom: 55, left: 68 };
+  let plotW, plotH;
+
+  function initCanvas() {
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    W = rect.width;
+    H = rect.height;
+    plotW = W - pad.left - pad.right;
+    plotH = H - pad.top - pad.bottom;
+  }
+
+  function yToPixel(val) {
+    return pad.top + plotH - (val / 100) * plotH;
+  }
+
+  function drawAxesAndGrid() {
+    // Grid lines
+    ctx.strokeStyle = C.grid;
+    ctx.lineWidth = 0.8;
+    for (let y = 0; y <= 100; y += 20) {
+      ctx.beginPath();
+      ctx.moveTo(pad.left, yToPixel(y));
+      ctx.lineTo(W - pad.right, yToPixel(y));
+      ctx.stroke();
+    }
+
+    // Axes
+    ctx.strokeStyle = C.axis;
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.moveTo(pad.left, pad.top);
+    ctx.lineTo(pad.left, pad.top + plotH);
+    ctx.lineTo(W - pad.right, pad.top + plotH);
+    ctx.stroke();
+
+    // Y labels
+    ctx.fillStyle = C.label;
+    ctx.font = '11px Inter, system-ui, sans-serif';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    for (let y = 0; y <= 100; y += 20) {
+      ctx.fillText(y + '%', pad.left - 8, yToPixel(y));
+    }
+
+    // Axis titles — set the baseline explicitly; on redraw the group-label loop
+    // below has already left it at 'top'.
+    ctx.fillStyle = C.text;
+    ctx.font = '12px Inter, system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.save();
+    ctx.translate(13, pad.top + plotH / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.textBaseline = 'middle';
+    ctx.fillText('OOD Success Rate (%)', 0, 0);
+    ctx.restore();
+    ctx.textBaseline = 'alphabetic';
+    ctx.fillText('Pretraining tasks (B)', pad.left + plotW / 2, H - 8);
+  }
+
+  function getBarGeometry() {
+    const nGroups = groups.length;
+    const groupWidth = plotW / nGroups;
+    const barWidth = Math.min(groupWidth * 0.28, 50);
+    const gap = barWidth * 0.35;
+    const result = [];
+    for (let i = 0; i < nGroups; i++) {
+      const cx = pad.left + groupWidth * (i + 0.5);
+      result.push({
+        beforeX: cx - barWidth - gap / 2,
+        afterX: cx + gap / 2,
+        barWidth,
+        cx,
+      });
+    }
+    return result;
+  }
+
+  function drawBar(x, barWidth, value, color, progress) {
+    const h = (value / 100) * plotH * progress;
+    const y = pad.top + plotH - h;
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    if (ctx.roundRect) {
+      ctx.roundRect(x, y, barWidth, h, [4, 4, 0, 0]);
+    } else {
+      ctx.rect(x, y, barWidth, h);
+    }
+    ctx.fill();
+    return y;
+  }
+
+  function drawValueLabel(x, barWidth, y, value, color, alpha) {
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = color;
+    ctx.font = '700 12px Inter, system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    ctx.fillText(value.toFixed(1) + '%', x + barWidth / 2, y - 5);
+    ctx.globalAlpha = 1;
+  }
+
+  function drawArrow(x, yFrom, yTo, delta, alpha) {
+    if (alpha <= 0) return;
+    ctx.globalAlpha = alpha;
+
+    const arrowX = x;
+    ctx.strokeStyle = COLOR_ARROW;
+    ctx.lineWidth = 2.5;
+    ctx.setLineDash([]);
+
+    // Vertical line
+    ctx.beginPath();
+    ctx.moveTo(arrowX, yFrom - 2);
+    ctx.lineTo(arrowX, yTo + 10);
+    ctx.stroke();
+
+    // Arrowhead
+    ctx.fillStyle = COLOR_ARROW;
+    ctx.beginPath();
+    ctx.moveTo(arrowX, yTo + 2);
+    ctx.lineTo(arrowX - 5, yTo + 12);
+    ctx.lineTo(arrowX + 5, yTo + 12);
+    ctx.closePath();
+    ctx.fill();
+
+    // Delta label (to the left of the arrow)
+    ctx.font = '700 13px Inter, system-ui, sans-serif';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = COLOR_ARROW;
+    const midY = (yFrom + yTo) / 2;
+    ctx.fillText('+' + delta.toFixed(1), arrowX - 8, midY);
+
+    ctx.globalAlpha = 1;
+  }
+
+  // 0 to 3 (0=nothing, 1=before bars done, 2=after bars done, 3=arrows done)
+  let animProgress = 0;
+  let animRunning = false;
+  let animStart = null;
+  let played = false;
+  const PHASE_DURATION = 700; // ms per phase
+
+  function easeOut(t) {
+    return 1 - Math.pow(1 - t, 3);
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    drawAxesAndGrid();
+
+    const geo = getBarGeometry();
+    const beforeProgress = Math.min(1, Math.max(0, animProgress));
+    const afterProgress = Math.min(1, Math.max(0, animProgress - 1));
+    const arrowAlpha = Math.min(1, Math.max(0, animProgress - 2));
+
+    for (let i = 0; i < groups.length; i++) {
+      const g = groups[i];
+      const { beforeX, afterX, barWidth, cx } = geo[i];
+
+      // X-axis group label
+      ctx.fillStyle = C.text;
+      ctx.font = '13px Inter, system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      ctx.fillText(g.label, cx, pad.top + plotH + 10);
+
+      // Before bar
+      if (beforeProgress > 0) {
+        const yBefore = drawBar(beforeX, barWidth, g.before, COLOR_BEFORE, easeOut(beforeProgress));
+        if (beforeProgress >= 1) {
+          drawValueLabel(beforeX, barWidth, yBefore, g.before, C.label, Math.min(1, (animProgress - 0.8) * 5));
+        }
+      }
+
+      // After bar
+      if (afterProgress > 0) {
+        const yAfter = drawBar(afterX, barWidth, g.after, COLOR_AFTER, easeOut(afterProgress));
+        if (afterProgress >= 1) {
+          drawValueLabel(afterX, barWidth, yAfter, g.after, C.blue, Math.min(1, (animProgress - 1.8) * 5));
+        }
+      }
+
+      // Arrow between bars
+      if (arrowAlpha > 0) {
+        const yFrom = yToPixel(g.before);
+        const yTo = yToPixel(g.after);
+        const arrowMidX = beforeX + barWidth + (afterX - beforeX - barWidth) / 2;
+        drawArrow(arrowMidX, yFrom, yTo, g.delta, easeOut(arrowAlpha));
+      }
+    }
+  }
+
+  function animateFrame(timestamp) {
+    if (!animRunning) return;
+    if (!animStart) animStart = timestamp;
+    const elapsed = timestamp - animStart;
+    const totalDuration = PHASE_DURATION * 3;
+    animProgress = Math.min(3, (elapsed / totalDuration) * 3);
+    draw();
+    if (elapsed < totalDuration) {
+      requestAnimationFrame(animateFrame);
+    } else {
+      animProgress = 3;
+      animRunning = false;
+      draw();
+    }
+  }
+
+  function startAnimation(forceComplete) {
+    if (played && !forceComplete) return;
+    played = true;
+    if (forceComplete) {
+      animRunning = false;
+      animProgress = 3;
+      animStart = null;
+      draw();
+      return;
+    }
+    animProgress = 0;
+    animStart = null;
+    animRunning = true;
+    requestAnimationFrame(animateFrame);
+  }
+
+  window.addEventListener('resize', () => {
+    const wasComplete = animProgress >= 3;
+    initCanvas();
+    if (wasComplete) animProgress = 3;
+    draw();
+  });
+
+  initCanvas();
+  draw();
+
+  window.CG.figures.push({ watch: root.querySelector('.chart-container'), play: startAnimation });
+})();
+</script>
+
+<!-- ─── Q3: dependent-pair coverage in 2S-PP ────────────────────────────────── -->
+<script>
+(function () {
+  'use strict';
+
+  const root = document.getElementById('q3');
+  const C = window.CG.colors;
+  const A = window.CG.alpha;
+
+  // oodViol is pc_same_container_given_place_obj0: how often the first object went into
+  // the reserved container, among the episodes where it was actually placed somewhere.
+  const CONDITIONS = [
+    {
+      label: '4 / 12', pairs: 4,
+      oodSuccess: { mean: 1.2500, se: 1.0486 },
+      oodViol:    { mean: 36.1738, se: 1.7874 },
+      meterSub: 'Only 4 combinations appear; the other 8 are never demonstrated.',
+    },
+    {
+      label: '6 / 12', pairs: 6,
+      oodSuccess: { mean: 7.2222, se: 1.3784 },
+      oodViol:    { mean: 24.3764, se: 2.9536 },
+      meterSub: '6 combinations appear, from the same 12 demonstrations.',
+    },
+    {
+      label: '9 / 12', pairs: 9,
+      oodSuccess: { mean: 16.1111, se: 0.2778 },
+      oodViol:    { mean: 17.3240, se: 1.4607 },
+      meterSub: '9 combinations appear; wrong-container mistakes keep falling.',
+    },
+    {
+      label: '12 / 12', pairs: 12,
+      oodSuccess: { mean: 18.4722, se: 2.7039 },
+      oodViol:    { mean: 15.6946, se: 4.5910 },
+      meterSub: 'Every combination appears at least once.',
+    },
+  ];
+
+  const lerp = (a, b, t) => a + (b - a) * t;
+  const OBJECTS = ['cube', 'cross', 'cylinder', 'milk'];
+  const CONTAINERS = ['plate', 'mug', 'bin'];
+  const EXAMPLE = { r: 0, c: 0 }; // cube × plate — the case shown in the figure
+
+  // Fixed, spread-out reveal order (schematic — not the true experimental identity).
+  // Chosen so cells light up across rows/columns rather than row-by-row.
+  // The EXAMPLE cell (cube × plate) is deliberately last: the figure presents it as a
+  // held-out case, so it must stay unfilled until coverage is complete.
+  const REVEAL_ORDER = [
+    [2, 1], [1, 2], [3, 0], [0, 2],
+    [2, 0], [1, 1], [3, 2], [0, 1],
+    [2, 2], [1, 0], [3, 1], [0, 0],
+  ];
+  const revealIndex = (r, c) => REVEAL_ORDER.findIndex(([rr, cc]) => rr === r && cc === c);
+
+  // Lattice
+  const lattice = root.querySelector('#lattice');
+  const latticeCells = [];
+  for (let r = 0; r < 4; r++) {
+    for (let c = 0; c < 3; c++) {
+      const cell = document.createElement('div');
+      const isEx = r === EXAMPLE.r && c === EXAMPLE.c;
+      cell.className = 'lcell' + (isEx ? ' example' : '');
+      cell.dataset.reveal = revealIndex(r, c);
+      cell.title = 'first object: ' + OBJECTS[r] + ' · reserved for second object: ' + CONTAINERS[c];
+      lattice.appendChild(cell);
+      latticeCells.push(cell);
+    }
+  }
+
+  // Budget strip
+  const budgetStrip = root.querySelector('#budgetStrip');
+  for (let i = 0; i < 12; i++) {
+    const d = document.createElement('div');
+    d.className = 'btask';
+    budgetStrip.appendChild(d);
+  }
+
+  // Resolve up front and complain loudly: a missing node here used to throw mid-render,
+  // which silently aborted the whole figure before it could register itself.
+  function need(sel) {
+    const el = root.querySelector(sel);
+    if (!el) console.error('Q3: missing element ' + sel);
+    return el;
+  }
+  const meterFill = need('#meterFill');
+  const meterValue = need('#meterValue');
+  const meterSub = need('#meterSub');
+  const latticeCount = need('#latticeCount');
+  const budgetNote = need('#budgetNote');
+  const covButtons = root.querySelectorAll('.cov-btn');
+
+  let currentIdx = 3;
+
+  function setCoverage(idx) {
+    currentIdx = idx;
+    const d = CONDITIONS[idx];
+    meterFill.style.width = (d.pairs / 12 * 100) + '%';
+    meterValue.textContent = d.pairs + ' / 12';
+    meterSub.textContent = d.meterSub;
+    latticeCount.textContent = d.pairs;
+    budgetNote.textContent =
+      d.pairs < 12
+        ? 'Always 12 demos. Spread over only ' + d.pairs + ' combinations, so each gets repeated more often — and ' +
+          (12 - d.pairs) + ' combinations are never shown.'
+        : 'Always 12 demos, spread across all 12 combinations.';
+    latticeCells.forEach((cell) => {
+      cell.classList.toggle('on', Number(cell.dataset.reveal) < d.pairs);
+    });
+    covButtons.forEach((btn) => {
+      btn.classList.toggle('active', Number(btn.dataset.idx) === idx);
+    });
+  }
+
+  // Combined chart
+  function setupCombinedChart() {
+    const canvas = root.querySelector('#chartCombined');
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    if (rect.width < 10) return { draw() {} };
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    const ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const W = rect.width, H = rect.height;
+    // left fits the tick labels plus the rotated axis title beside them
+    const pad = { top: 22, right: 56, bottom: 42, left: 58 };
+    const plotW = W - pad.left - pad.right;
+    const plotH = H - pad.top - pad.bottom;
+
+    const success = CONDITIONS.map((d) => d.oodSuccess);
+    const viol = CONDITIONS.map((d) => d.oodViol);
+    const yMax = 40; // shared axis: covers 36.2 + SE
+    const N = CONDITIONS.length;
+    const segCount = N - 1;
+
+    function valueAt(series, t) {
+      if (t <= 0) return series[0];
+      if (t >= segCount) return series[N - 1];
+      const i = Math.floor(t);
+      const f = t - i;
+      return {
+        mean: lerp(series[i].mean, series[i + 1].mean, f),
+        se: lerp(series[i].se, series[i + 1].se, f),
+      };
+    }
+
+    function buildPts(series, t) {
+      const pts = [];
+      for (let i = 0; i < N; i++) {
+        if (i <= t + 1e-6) pts.push({ x: i, mean: series[i].mean, se: series[i].se, real: true });
+      }
+      if (t < segCount && Math.abs(t - Math.round(t)) > 1e-4) {
+        const v = valueAt(series, t);
+        pts.push({ x: t, mean: v.mean, se: v.se, real: false });
+      }
+      if (!pts.length) pts.push({ x: 0, mean: series[0].mean, se: series[0].se, real: true });
+      return pts;
+    }
+
+    function drawSeries(pts, color, fillColor, xToPixel, yToPixel) {
+      ctx.beginPath();
+      pts.forEach((p, i) => {
+        const px = xToPixel(p.x);
+        const py = yToPixel(Math.min(yMax, p.mean + p.se));
+        if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+      });
+      for (let i = pts.length - 1; i >= 0; i--) {
+        ctx.lineTo(xToPixel(pts[i].x), yToPixel(Math.max(0, pts[i].mean - pts[i].se)));
+      }
+      ctx.closePath();
+      ctx.fillStyle = fillColor;
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2.5;
+      ctx.lineJoin = 'round';
+      pts.forEach((p, i) => {
+        const px = xToPixel(p.x), py = yToPixel(p.mean);
+        if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+      });
+      ctx.stroke();
+
+      pts.forEach((p) => {
+        if (!p.real) return;
+        const px = xToPixel(p.x), py = yToPixel(p.mean);
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 1.3;
+        ctx.beginPath();
+        ctx.moveTo(px, yToPixel(Math.min(yMax, p.mean + p.se)));
+        ctx.lineTo(px, yToPixel(Math.max(0, p.mean - p.se)));
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(px, py, 4.2, 0, Math.PI * 2);
+        ctx.fillStyle = color;
+        ctx.fill();
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 1.4;
+        ctx.stroke();
+      });
+    }
+
+    function draw(t, highlightIdx) {
+      const xToPixel = (x) => pad.left + (x / segCount) * plotW;
+      const yToPixel = (y) => pad.top + plotH - (y / yMax) * plotH;
+      ctx.clearRect(0, 0, W, H);
+
+      // Selected coverage highlight band
+      const hi = Math.round(Math.min(Math.max(highlightIdx, 0), 3));
+      const hx = xToPixel(hi);
+      const bandW = plotW / segCount * 0.55;
+      ctx.fillStyle = A(C.blue, 0.10);
+      ctx.fillRect(hx - bandW / 2, pad.top, bandW, plotH);
+
+      // Grid
+      ctx.strokeStyle = C.grid;
+      ctx.lineWidth = 0.8;
+      for (let y = 0; y <= yMax; y += 10) {
+        ctx.beginPath();
+        ctx.moveTo(pad.left, yToPixel(y));
+        ctx.lineTo(W - pad.right, yToPixel(y));
+        ctx.stroke();
+      }
+
+      // Axes
+      ctx.strokeStyle = C.axis;
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(pad.left, pad.top);
+      ctx.lineTo(pad.left, pad.top + plotH);
+      ctx.lineTo(W - pad.right, pad.top + plotH);
+      ctx.stroke();
+
+      // Y labels
+      ctx.fillStyle = C.label;
+      ctx.font = '11px Inter, system-ui, sans-serif';
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'middle';
+      for (let y = 0; y <= yMax; y += 10) {
+        ctx.fillText(y + '%', pad.left - 7, yToPixel(y));
+      }
+
+      // X labels
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      for (let i = 0; i < N; i++) {
+        if (i <= t + 1e-6) {
+          const px = xToPixel(i);
+          ctx.fillStyle = i === hi ? C.blue : C.label;
+          ctx.font = (i === hi ? '700 ' : '') + '11px Inter, system-ui, sans-serif';
+          ctx.fillText(CONDITIONS[i].label, px, pad.top + plotH + 8);
+          ctx.strokeStyle = C.axis;
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(px, pad.top + plotH);
+          ctx.lineTo(px, pad.top + plotH + 3);
+          ctx.stroke();
+        }
+      }
+
+      // Axis titles — the x-label loop above leaves textBaseline at 'top'
+      ctx.fillStyle = C.text;
+      ctx.font = '12px Inter, system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'alphabetic';
+      ctx.fillText('Object–destination combinations covered by training', pad.left + plotW / 2, H - 6);
+      ctx.save();
+      ctx.translate(13, pad.top + plotH / 2);
+      ctx.rotate(-Math.PI / 2);
+      ctx.textBaseline = 'middle';
+      ctx.fillText('Rate (%)', 0, 0);
+      ctx.restore();
+
+      const succPts = buildPts(success, t);
+      const violPts = buildPts(viol, t);
+      drawSeries(succPts, C.id, A(C.id, 0.12), xToPixel, yToPixel);
+      drawSeries(violPts, C.ood, A(C.ood, 0.12), xToPixel, yToPixel);
+
+      // Endpoint / tip labels
+      const tipS = succPts[succPts.length - 1];
+      const tipV = violPts[violPts.length - 1];
+      ctx.font = '700 11px Inter, system-ui, sans-serif';
+      ctx.textAlign = 'left';
+      if (tipS) {
+        ctx.fillStyle = C.id;
+        ctx.fillText(tipS.mean.toFixed(1) + '%', xToPixel(tipS.x) + 8, yToPixel(tipS.mean) - 4);
+      }
+      if (tipV) {
+        ctx.fillStyle = C.ood;
+        ctx.fillText(tipV.mean.toFixed(1) + '%', xToPixel(tipV.x) + 8, yToPixel(tipV.mean) + 12);
+      }
+    }
+
+    return { draw, segCount };
+  }
+
+  let chart = null;
+
+  function renderAt(t) {
+    if (!chart) chart = setupCombinedChart();
+    const idx = Math.round(Math.min(Math.max(t, 0), 3));
+    setCoverage(idx);
+    chart.draw(t, idx);
+  }
+
+  let animating = false;
+  let played = false;
+  let rafId = null;
+  let startTime = null;
+  const DURATION = 5200;
+
+  function stopAnim() {
+    animating = false;
+    if (rafId) cancelAnimationFrame(rafId);
+    rafId = null;
+    startTime = null;
+  }
+
+  function startAnim(forceComplete) {
+    if (played && !forceComplete) return;
+    played = true;
+    if (forceComplete) {
+      stopAnim();
+      renderAt(3);
+      return;
+    }
+    stopAnim();
+    animating = true;
+    startTime = null;
+    rafId = requestAnimationFrame(function frame(ts) {
+      if (startTime === null) startTime = ts;
+      let g = (ts - startTime) / DURATION;
+      if (g >= 1) g = 1;
+      renderAt(lerp(0, 3, g));
+      if (g < 1 && animating) rafId = requestAnimationFrame(frame);
+      else animating = false;
+    });
+  }
+
+  covButtons.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      stopAnim();
+      played = true;
+      renderAt(Number(btn.dataset.idx));
+    });
+  });
+
+  window.addEventListener('resize', () => {
+    chart = setupCombinedChart();
+    renderAt(currentIdx);
+  });
+
+  renderAt(0);
+
+  window.CG.figures.push({ watch: root.querySelector('#q3Result'), play: startAnim });
+})();
+</script>
+
+<!-- ─── Play each figure once, when it scrolls into view ─────────────────────── -->
+<script>
+(function () {
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const figures = window.CG.figures.filter((f) => f.watch);
+
+  // Reduced motion or no observer support: jump straight to the final frame.
+  if (reduceMotion || typeof IntersectionObserver === 'undefined') {
+    figures.forEach((f) => f.play(true));
+    return;
+  }
+
+  const obs = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (!entry.isIntersecting) return;
+      obs.unobserve(entry.target);
+      const fig = figures.find((f) => f.watch === entry.target);
+      if (fig) fig.play(false);
+    });
+  }, { threshold: 0.35 });
+
+  figures.forEach((f) => obs.observe(f.watch));
+})();
+</script>
+
+
+<style>
+  .hero,.figure-placeholder,#viewer,.bibtex-block,footer{display:none!important}
+  section:nth-of-type(2),section:nth-of-type(3),section:nth-of-type(4){display:none!important}
+  #q1,#q2{display:none!important}
+</style>
+<script>window.addEventListener('load',function(){window.CG.figures.forEach(function(f){f.play(true);});});</script>
+
+</body>
+</html>

@@ -1,0 +1,251 @@
+condition,condition_label,seed,split,category,category_label,rate
+cov6,Cov6,0,id,pc_no_obj0_place,No obj0 placement,36.8750
+cov6,Cov6,0,id,pc_same_container_violation,Same-container violation,6.2500
+cov6,Cov6,0,id,pc_other_illegal_obj0_place,Other illegal obj0 placement,0.0000
+cov6,Cov6,0,id,pc_legal_obj0_but_later_fail,"Legal obj0, later failure",15.6250
+cov6,Cov6,0,id,pc_success,Final success,41.2500
+cov6,Cov6,0,ood,pc_no_obj0_place,No obj0 placement,45.3125
+cov6,Cov6,0,ood,pc_same_container_violation,Same-container violation,12.8125
+cov6,Cov6,0,ood,pc_other_illegal_obj0_place,Other illegal obj0 placement,0.0000
+cov6,Cov6,0,ood,pc_legal_obj0_but_later_fail,"Legal obj0, later failure",32.5000
+cov6,Cov6,0,ood,pc_success,Final success,9.3750
+cov6,Cov6,1,id,pc_no_obj0_place,No obj0 placement,35.6250
+cov6,Cov6,1,id,pc_same_container_violation,Same-container violation,7.5000
+cov6,Cov6,1,id,pc_other_illegal_obj0_place,Other illegal obj0 placement,0.0000
+cov6,Cov6,1,id,pc_legal_obj0_but_later_fail,"Legal obj0, later failure",18.1250
+cov6,Cov6,1,id,pc_success,Final success,38.7500
+cov6,Cov6,1,ood,pc_no_obj0_place,No obj0 placement,52.8125
+cov6,Cov6,1,ood,pc_same_container_violation,Same-container violation,7.8125
+cov6,Cov6,1,ood,pc_other_illegal_obj0_place,Other illegal obj0 placement,0.0000
+cov6,Cov6,1,ood,pc_legal_obj0_but_later_fail,"Legal obj0, later failure",22.8125
+cov6,Cov6,1,ood,pc_success,Final success,16.5625
+cov6,Cov6,2,id,pc_no_obj0_place,No obj0 placement,31.2500
+cov6,Cov6,2,id,pc_same_container_violation,Same-container violation,5.0000
+cov6,Cov6,2,id,pc_other_illegal_obj0_place,Other illegal obj0 placement,0.0000
+cov6,Cov6,2,id,pc_legal_obj0_but_later_fail,"Legal obj0, later failure",18.7500
+cov6,Cov6,2,id,pc_success,Final success,45.0000
+cov6,Cov6,2,ood,pc_no_obj0_place,No obj0 placement,67.8125
+cov6,Cov6,2,ood,pc_same_container_violation,Same-container violation,8.4375
+cov6,Cov6,2,ood,pc_other_illegal_obj0_place,Other illegal obj0 placement,0.0000
+cov6,Cov6,2,ood,pc_legal_obj0_but_later_fail,"Legal obj0, later failure",18.7500
+cov6,Cov6,2,ood,pc_success,Final success,5.0000
+cov6,Cov6,3,id,pc_no_obj0_place,No obj0 placement,28.7500
+cov6,Cov6,3,id,pc_same_container_violation,Same-container violation,5.0000
+cov6,Cov6,3,id,pc_other_illegal_obj0_place,Other illegal obj0 placement,0.0000
+cov6,Cov6,3,id,pc_legal_obj0_but_later_fail,"Legal obj0, later failure",20.6250
+cov6,Cov6,3,id,pc_success,Final success,45.6250
+cov6,Cov6,3,ood,pc_no_obj0_place,No obj0 placement,39.3750
+cov6,Cov6,3,ood,pc_same_container_violation,Same-container violation,15.0000
+cov6,Cov6,3,ood,pc_other_illegal_obj0_place,Other illegal obj0 placement,0.0000
+cov6,Cov6,3,ood,pc_legal_obj0_but_later_fail,"Legal obj0, later failure",41.5625
+cov6,Cov6,3,ood,pc_success,Final success,4.0625
+cov6,Cov6,4,id,pc_no_obj0_place,No obj0 placement,33.1250
+cov6,Cov6,4,id,pc_same_container_violation,Same-container violation,5.0000
+cov6,Cov6,4,id,pc_other_illegal_obj0_place,Other illegal obj0 placement,0.0000
+cov6,Cov6,4,id,pc_legal_obj0_but_later_fail,"Legal obj0, later failure",18.7500
+cov6,Cov6,4,id,pc_success,Final success,43.1250
+cov6,Cov6,4,ood,pc_no_obj0_place,No obj0 placement,55.3125
+cov6,Cov6,4,ood,pc_same_container_violation,Same-container violation,7.1875
+cov6,Cov6,4,ood,pc_other_illegal_obj0_place,Other illegal obj0 placement,0.0000
+cov6,Cov6,4,ood,pc_legal_obj0_but_later_fail,"Legal obj0, later failure",26.5625
+cov6,Cov6,4,ood,pc_success,Final success,10.9375
+cov9,Cov9,0,id,pc_no_obj0_place,No obj0 placement,32.5000
+cov9,Cov9,0,id,pc_same_container_violation,Same-container violation,8.1250
+cov9,Cov9,0,id,pc_other_illegal_obj0_place,Other illegal obj0 placement,0.0000
+cov9,Cov9,0,id,pc_legal_obj0_but_later_fail,"Legal obj0, later failure",15.0000
+cov9,Cov9,0,id,pc_success,Final success,44.3750
+cov9,Cov9,0,ood,pc_no_obj0_place,No obj0 placement,38.7500
+cov9,Cov9,0,ood,pc_same_container_violation,Same-container violation,10.0000
+cov9,Cov9,0,ood,pc_other_illegal_obj0_place,Other illegal obj0 placement,0.0000
+cov9,Cov9,0,ood,pc_legal_obj0_but_later_fail,"Legal obj0, later failure",32.8125
+cov9,Cov9,0,ood,pc_success,Final success,18.4375
+cov9,Cov9,1,id,pc_no_obj0_place,No obj0 placement,45.6250
+cov9,Cov9,1,id,pc_same_container_violation,Same-container violation,7.5000
+cov9,Cov9,1,id,pc_other_illegal_obj0_place,Other illegal obj0 placement,0.0000
+cov9,Cov9,1,id,pc_legal_obj0_but_later_fail,"Legal obj0, later failure",15.6250
+cov9,Cov9,1,id,pc_success,Final success,31.2500
+cov9,Cov9,1,ood,pc_no_obj0_place,No obj0 placement,45.6250
+cov9,Cov9,1,ood,pc_same_container_violation,Same-container violation,21.5625
+cov9,Cov9,1,ood,pc_other_illegal_obj0_place,Other illegal obj0 placement,0.0000
+cov9,Cov9,1,ood,pc_legal_obj0_but_later_fail,"Legal obj0, later failure",23.4375
+cov9,Cov9,1,ood,pc_success,Final success,9.3750
+cov9,Cov9,2,id,pc_no_obj0_place,No obj0 placement,30.6250
+cov9,Cov9,2,id,pc_same_container_violation,Same-container violation,3.7500
+cov9,Cov9,2,id,pc_other_illegal_obj0_place,Other illegal obj0 placement,0.0000
+cov9,Cov9,2,id,pc_legal_obj0_but_later_fail,"Legal obj0, later failure",17.5000
+cov9,Cov9,2,id,pc_success,Final success,48.1250
+cov9,Cov9,2,ood,pc_no_obj0_place,No obj0 placement,36.5625
+cov9,Cov9,2,ood,pc_same_container_violation,Same-container violation,10.9375
+cov9,Cov9,2,ood,pc_other_illegal_obj0_place,Other illegal obj0 placement,0.0000
+cov9,Cov9,2,ood,pc_legal_obj0_but_later_fail,"Legal obj0, later failure",26.8750
+cov9,Cov9,2,ood,pc_success,Final success,25.6250
+cov9,Cov9,3,id,pc_no_obj0_place,No obj0 placement,36.8750
+cov9,Cov9,3,id,pc_same_container_violation,Same-container violation,3.1250
+cov9,Cov9,3,id,pc_other_illegal_obj0_place,Other illegal obj0 placement,0.0000
+cov9,Cov9,3,id,pc_legal_obj0_but_later_fail,"Legal obj0, later failure",18.7500
+cov9,Cov9,3,id,pc_success,Final success,41.2500
+cov9,Cov9,3,ood,pc_no_obj0_place,No obj0 placement,51.5625
+cov9,Cov9,3,ood,pc_same_container_violation,Same-container violation,8.7500
+cov9,Cov9,3,ood,pc_other_illegal_obj0_place,Other illegal obj0 placement,0.0000
+cov9,Cov9,3,ood,pc_legal_obj0_but_later_fail,"Legal obj0, later failure",23.7500
+cov9,Cov9,3,ood,pc_success,Final success,15.9375
+cov9,Cov9,4,id,pc_no_obj0_place,No obj0 placement,33.1250
+cov9,Cov9,4,id,pc_same_container_violation,Same-container violation,1.8750
+cov9,Cov9,4,id,pc_other_illegal_obj0_place,Other illegal obj0 placement,0.0000
+cov9,Cov9,4,id,pc_legal_obj0_but_later_fail,"Legal obj0, later failure",20.6250
+cov9,Cov9,4,id,pc_success,Final success,44.3750
+cov9,Cov9,4,ood,pc_no_obj0_place,No obj0 placement,51.2500
+cov9,Cov9,4,ood,pc_same_container_violation,Same-container violation,6.2500
+cov9,Cov9,4,ood,pc_other_illegal_obj0_place,Other illegal obj0 placement,0.0000
+cov9,Cov9,4,ood,pc_legal_obj0_but_later_fail,"Legal obj0, later failure",17.5000
+cov9,Cov9,4,ood,pc_success,Final success,25.0000
+cov12,Cov12,0,id,pc_no_obj0_place,No obj0 placement,35.0000
+cov12,Cov12,0,id,pc_same_container_violation,Same-container violation,1.2500
+cov12,Cov12,0,id,pc_other_illegal_obj0_place,Other illegal obj0 placement,0.0000
+cov12,Cov12,0,id,pc_legal_obj0_but_later_fail,"Legal obj0, later failure",23.1250
+cov12,Cov12,0,id,pc_success,Final success,40.6250
+cov12,Cov12,0,ood,pc_no_obj0_place,No obj0 placement,33.7500
+cov12,Cov12,0,ood,pc_same_container_violation,Same-container violation,6.2500
+cov12,Cov12,0,ood,pc_other_illegal_obj0_place,Other illegal obj0 placement,0.0000
+cov12,Cov12,0,ood,pc_legal_obj0_but_later_fail,"Legal obj0, later failure",21.8750
+cov12,Cov12,0,ood,pc_success,Final success,38.1250
+cov12,Cov12,1,id,pc_no_obj0_place,No obj0 placement,35.0000
+cov12,Cov12,1,id,pc_same_container_violation,Same-container violation,4.3750
+cov12,Cov12,1,id,pc_other_illegal_obj0_place,Other illegal obj0 placement,0.0000
+cov12,Cov12,1,id,pc_legal_obj0_but_later_fail,"Legal obj0, later failure",23.1250
+cov12,Cov12,1,id,pc_success,Final success,37.5000
+cov12,Cov12,1,ood,pc_no_obj0_place,No obj0 placement,35.6250
+cov12,Cov12,1,ood,pc_same_container_violation,Same-container violation,5.9375
+cov12,Cov12,1,ood,pc_other_illegal_obj0_place,Other illegal obj0 placement,0.0000
+cov12,Cov12,1,ood,pc_legal_obj0_but_later_fail,"Legal obj0, later failure",27.1875
+cov12,Cov12,1,ood,pc_success,Final success,31.2500
+cov12,Cov12,2,id,pc_no_obj0_place,No obj0 placement,35.0000
+cov12,Cov12,2,id,pc_same_container_violation,Same-container violation,10.0000
+cov12,Cov12,2,id,pc_other_illegal_obj0_place,Other illegal obj0 placement,0.0000
+cov12,Cov12,2,id,pc_legal_obj0_but_later_fail,"Legal obj0, later failure",21.8750
+cov12,Cov12,2,id,pc_success,Final success,33.1250
+cov12,Cov12,2,ood,pc_no_obj0_place,No obj0 placement,38.4375
+cov12,Cov12,2,ood,pc_same_container_violation,Same-container violation,12.8125
+cov12,Cov12,2,ood,pc_other_illegal_obj0_place,Other illegal obj0 placement,0.0000
+cov12,Cov12,2,ood,pc_legal_obj0_but_later_fail,"Legal obj0, later failure",37.8125
+cov12,Cov12,2,ood,pc_success,Final success,10.9375
+cov12,Cov12,3,id,pc_no_obj0_place,No obj0 placement,51.8750
+cov12,Cov12,3,id,pc_same_container_violation,Same-container violation,3.1250
+cov12,Cov12,3,id,pc_other_illegal_obj0_place,Other illegal obj0 placement,0.0000
+cov12,Cov12,3,id,pc_legal_obj0_but_later_fail,"Legal obj0, later failure",14.3750
+cov12,Cov12,3,id,pc_success,Final success,30.6250
+cov12,Cov12,3,ood,pc_no_obj0_place,No obj0 placement,52.5000
+cov12,Cov12,3,ood,pc_same_container_violation,Same-container violation,5.9375
+cov12,Cov12,3,ood,pc_other_illegal_obj0_place,Other illegal obj0 placement,0.0000
+cov12,Cov12,3,ood,pc_legal_obj0_but_later_fail,"Legal obj0, later failure",21.5625
+cov12,Cov12,3,ood,pc_success,Final success,20.0000
+cov12,Cov12,4,id,pc_no_obj0_place,No obj0 placement,41.8750
+cov12,Cov12,4,id,pc_same_container_violation,Same-container violation,2.5000
+cov12,Cov12,4,id,pc_other_illegal_obj0_place,Other illegal obj0 placement,0.0000
+cov12,Cov12,4,id,pc_legal_obj0_but_later_fail,"Legal obj0, later failure",23.7500
+cov12,Cov12,4,id,pc_success,Final success,31.8750
+cov12,Cov12,4,ood,pc_no_obj0_place,No obj0 placement,44.6875
+cov12,Cov12,4,ood,pc_same_container_violation,Same-container violation,5.3125
+cov12,Cov12,4,ood,pc_other_illegal_obj0_place,Other illegal obj0 placement,0.0000
+cov12,Cov12,4,ood,pc_legal_obj0_but_later_fail,"Legal obj0, later failure",20.9375
+cov12,Cov12,4,ood,pc_success,Final success,29.0625
+orthogonal,Cov16,0,id,pc_no_obj0_place,No obj0 placement,30.6250
+orthogonal,Cov16,0,id,pc_same_container_violation,Same-container violation,10.0000
+orthogonal,Cov16,0,id,pc_other_illegal_obj0_place,Other illegal obj0 placement,0.0000
+orthogonal,Cov16,0,id,pc_legal_obj0_but_later_fail,"Legal obj0, later failure",23.7500
+orthogonal,Cov16,0,id,pc_success,Final success,35.6250
+orthogonal,Cov16,0,ood,pc_no_obj0_place,No obj0 placement,29.0625
+orthogonal,Cov16,0,ood,pc_same_container_violation,Same-container violation,10.0000
+orthogonal,Cov16,0,ood,pc_other_illegal_obj0_place,Other illegal obj0 placement,0.0000
+orthogonal,Cov16,0,ood,pc_legal_obj0_but_later_fail,"Legal obj0, later failure",18.1250
+orthogonal,Cov16,0,ood,pc_success,Final success,42.8125
+orthogonal,Cov16,1,id,pc_no_obj0_place,No obj0 placement,33.7500
+orthogonal,Cov16,1,id,pc_same_container_violation,Same-container violation,5.0000
+orthogonal,Cov16,1,id,pc_other_illegal_obj0_place,Other illegal obj0 placement,0.0000
+orthogonal,Cov16,1,id,pc_legal_obj0_but_later_fail,"Legal obj0, later failure",20.6250
+orthogonal,Cov16,1,id,pc_success,Final success,40.6250
+orthogonal,Cov16,1,ood,pc_no_obj0_place,No obj0 placement,34.3750
+orthogonal,Cov16,1,ood,pc_same_container_violation,Same-container violation,8.7500
+orthogonal,Cov16,1,ood,pc_other_illegal_obj0_place,Other illegal obj0 placement,0.0000
+orthogonal,Cov16,1,ood,pc_legal_obj0_but_later_fail,"Legal obj0, later failure",26.8750
+orthogonal,Cov16,1,ood,pc_success,Final success,30.0000
+orthogonal,Cov16,2,id,pc_no_obj0_place,No obj0 placement,33.1250
+orthogonal,Cov16,2,id,pc_same_container_violation,Same-container violation,8.1250
+orthogonal,Cov16,2,id,pc_other_illegal_obj0_place,Other illegal obj0 placement,0.0000
+orthogonal,Cov16,2,id,pc_legal_obj0_but_later_fail,"Legal obj0, later failure",23.1250
+orthogonal,Cov16,2,id,pc_success,Final success,35.6250
+orthogonal,Cov16,2,ood,pc_no_obj0_place,No obj0 placement,38.7500
+orthogonal,Cov16,2,ood,pc_same_container_violation,Same-container violation,10.6250
+orthogonal,Cov16,2,ood,pc_other_illegal_obj0_place,Other illegal obj0 placement,0.0000
+orthogonal,Cov16,2,ood,pc_legal_obj0_but_later_fail,"Legal obj0, later failure",27.8125
+orthogonal,Cov16,2,ood,pc_success,Final success,22.8125
+orthogonal,Cov16,3,id,pc_no_obj0_place,No obj0 placement,31.2500
+orthogonal,Cov16,3,id,pc_same_container_violation,Same-container violation,5.0000
+orthogonal,Cov16,3,id,pc_other_illegal_obj0_place,Other illegal obj0 placement,0.0000
+orthogonal,Cov16,3,id,pc_legal_obj0_but_later_fail,"Legal obj0, later failure",23.1250
+orthogonal,Cov16,3,id,pc_success,Final success,40.6250
+orthogonal,Cov16,3,ood,pc_no_obj0_place,No obj0 placement,43.7500
+orthogonal,Cov16,3,ood,pc_same_container_violation,Same-container violation,8.1250
+orthogonal,Cov16,3,ood,pc_other_illegal_obj0_place,Other illegal obj0 placement,0.0000
+orthogonal,Cov16,3,ood,pc_legal_obj0_but_later_fail,"Legal obj0, later failure",24.0625
+orthogonal,Cov16,3,ood,pc_success,Final success,24.0625
+orthogonal,Cov16,4,id,pc_no_obj0_place,No obj0 placement,30.6250
+orthogonal,Cov16,4,id,pc_same_container_violation,Same-container violation,6.2500
+orthogonal,Cov16,4,id,pc_other_illegal_obj0_place,Other illegal obj0 placement,0.0000
+orthogonal,Cov16,4,id,pc_legal_obj0_but_later_fail,"Legal obj0, later failure",24.3750
+orthogonal,Cov16,4,id,pc_success,Final success,38.7500
+orthogonal,Cov16,4,ood,pc_no_obj0_place,No obj0 placement,33.4375
+orthogonal,Cov16,4,ood,pc_same_container_violation,Same-container violation,6.2500
+orthogonal,Cov16,4,ood,pc_other_illegal_obj0_place,Other illegal obj0 placement,0.0000
+orthogonal,Cov16,4,ood,pc_legal_obj0_but_later_fail,"Legal obj0, later failure",22.8125
+orthogonal,Cov16,4,ood,pc_success,Final success,37.5000
+full,Full,0,id,pc_no_obj0_place,No obj0 placement,30.4167
+full,Full,0,id,pc_same_container_violation,Same-container violation,8.9583
+full,Full,0,id,pc_other_illegal_obj0_place,Other illegal obj0 placement,0.0000
+full,Full,0,id,pc_legal_obj0_but_later_fail,"Legal obj0, later failure",20.4167
+full,Full,0,id,pc_success,Final success,40.2083
+full,Full,0,ood,pc_no_obj0_place,No obj0 placement,30.4167
+full,Full,0,ood,pc_same_container_violation,Same-container violation,8.9583
+full,Full,0,ood,pc_other_illegal_obj0_place,Other illegal obj0 placement,0.0000
+full,Full,0,ood,pc_legal_obj0_but_later_fail,"Legal obj0, later failure",20.4167
+full,Full,0,ood,pc_success,Final success,40.2083
+full,Full,1,id,pc_no_obj0_place,No obj0 placement,44.7917
+full,Full,1,id,pc_same_container_violation,Same-container violation,6.4583
+full,Full,1,id,pc_other_illegal_obj0_place,Other illegal obj0 placement,0.0000
+full,Full,1,id,pc_legal_obj0_but_later_fail,"Legal obj0, later failure",16.0417
+full,Full,1,id,pc_success,Final success,32.7083
+full,Full,1,ood,pc_no_obj0_place,No obj0 placement,44.7917
+full,Full,1,ood,pc_same_container_violation,Same-container violation,6.4583
+full,Full,1,ood,pc_other_illegal_obj0_place,Other illegal obj0 placement,0.0000
+full,Full,1,ood,pc_legal_obj0_but_later_fail,"Legal obj0, later failure",16.0417
+full,Full,1,ood,pc_success,Final success,32.7083
+full,Full,2,id,pc_no_obj0_place,No obj0 placement,31.4583
+full,Full,2,id,pc_same_container_violation,Same-container violation,9.1667
+full,Full,2,id,pc_other_illegal_obj0_place,Other illegal obj0 placement,0.0000
+full,Full,2,id,pc_legal_obj0_but_later_fail,"Legal obj0, later failure",21.2500
+full,Full,2,id,pc_success,Final success,38.1250
+full,Full,2,ood,pc_no_obj0_place,No obj0 placement,31.4583
+full,Full,2,ood,pc_same_container_violation,Same-container violation,9.1667
+full,Full,2,ood,pc_other_illegal_obj0_place,Other illegal obj0 placement,0.0000
+full,Full,2,ood,pc_legal_obj0_but_later_fail,"Legal obj0, later failure",21.2500
+full,Full,2,ood,pc_success,Final success,38.1250
+full,Full,3,id,pc_no_obj0_place,No obj0 placement,35.8333
+full,Full,3,id,pc_same_container_violation,Same-container violation,8.5417
+full,Full,3,id,pc_other_illegal_obj0_place,Other illegal obj0 placement,0.0000
+full,Full,3,id,pc_legal_obj0_but_later_fail,"Legal obj0, later failure",24.5833
+full,Full,3,id,pc_success,Final success,31.0417
+full,Full,3,ood,pc_no_obj0_place,No obj0 placement,35.8333
+full,Full,3,ood,pc_same_container_violation,Same-container violation,8.5417
+full,Full,3,ood,pc_other_illegal_obj0_place,Other illegal obj0 placement,0.0000
+full,Full,3,ood,pc_legal_obj0_but_later_fail,"Legal obj0, later failure",24.5833
+full,Full,3,ood,pc_success,Final success,31.0417
+full,Full,4,id,pc_no_obj0_place,No obj0 placement,46.0417
+full,Full,4,id,pc_same_container_violation,Same-container violation,4.7917
+full,Full,4,id,pc_other_illegal_obj0_place,Other illegal obj0 placement,0.0000
+full,Full,4,id,pc_legal_obj0_but_later_fail,"Legal obj0, later failure",19.5833
+full,Full,4,id,pc_success,Final success,29.5833
+full,Full,4,ood,pc_no_obj0_place,No obj0 placement,46.0417
+full,Full,4,ood,pc_same_container_violation,Same-container violation,4.7917
+full,Full,4,ood,pc_other_illegal_obj0_place,Other illegal obj0 placement,0.0000
+full,Full,4,ood,pc_legal_obj0_but_later_fail,"Legal obj0, later failure",19.5833
+full,Full,4,ood,pc_success,Final success,29.5833
