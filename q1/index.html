@@ -154,7 +154,8 @@ function setupChart(canvasId, data) {
   ctx.scale(dpr, dpr);
   const W = rect.width, H = rect.height;
 
-  const pad = { top: 20, right: 30, bottom: 45, left: 55 };
+  // right fits the trailing "NN.N%" value label drawn 8px past the frontier point
+  const pad = { top: 20, right: 52, bottom: 45, left: 55 };
   const plotW = W - pad.left - pad.right;
   const plotH = H - pad.top - pad.bottom;
 

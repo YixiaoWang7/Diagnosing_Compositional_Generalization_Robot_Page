@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>L5 Task-Cube Analysis</title>
+<title>Pick-Place-Press Task Cube</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body {
@@ -22,15 +22,15 @@ body {
   flex-shrink: 0;
   box-shadow: 0 1px 3px rgba(0,0,0,.04);
 }
-#topbar h1 { font-size: 14px; color: #2f6fb0; font-weight: 700; }
+#topbar h1 { font-size: 14px; color: #4a7396; font-weight: 700; }
 
 #exp-select {
-  padding: 5px 10px; border: 1px solid rgba(47,111,176,.3);
+  padding: 5px 10px; border: 1px solid rgba(74,115,150,.3);
   border-radius: 6px; background: #ffffff; color: #1f2733;
   font-size: 12px; font-weight: 600; cursor: pointer;
   min-width: 220px;
 }
-#exp-select optgroup { background: #f4f6fa; color: #2f6fb0; font-weight: 700; }
+#exp-select optgroup { background: #f4f6fa; color: #4a7396; font-weight: 700; }
 #exp-select option { background: #ffffff; color: #1f2733; padding: 2px 6px; }
 
 .filter-group { margin-left: 16px; display: flex; gap: 6px; align-items: center; }
@@ -41,7 +41,7 @@ body {
   font-size: 11px; cursor: pointer; transition: .12s;
 }
 .filter-btn:hover { border-color: rgba(0,0,0,.25); }
-.filter-btn.active { background: rgba(47,111,176,.1); color: #285f99; border-color: rgba(47,111,176,.4); }
+.filter-btn.active { background: rgba(74,115,150,.1); color: #3f6b91; border-color: rgba(74,115,150,.4); }
 
 #main { flex: 1; display: flex; min-height: 0; }
 
@@ -51,20 +51,21 @@ canvas:active { cursor: grabbing; }
 
 #tooltip {
   position: absolute; pointer-events: none; display: none;
-  background: rgba(255,255,255,.96); border: 1px solid rgba(47,111,176,.25);
+  background: rgba(255,255,255,.96); border: 1px solid rgba(74,115,150,.25);
   border-radius: 8px; padding: 10px 14px; z-index: 30;
   font-size: 12px; line-height: 1.6; max-width: 320px;
   backdrop-filter: blur(6px);
   box-shadow: 0 4px 16px rgba(0,0,0,.1);
   color: #1f2733;
 }
-#tooltip .tt-task { font-weight: 700; color: #285f99; font-size: 13px; }
-#tooltip .tt-label { display: inline-block; width: 70px; opacity: .55; }
+#tooltip .tt-task { font-weight: 700; color: #3f6b91; font-size: 13px; }
+/* auto width, not a fixed column — some labels are full phrases and would be clipped */
+#tooltip .tt-label { opacity: .55; margin-right: 4px; }
 #tooltip .tt-id { font-weight: 600; }
 #tooltip .tt-bar { height: 6px; border-radius: 3px; margin-top: 4px; }
 
 #sidebar {
-  width: 280px; flex-shrink: 0;
+  width: 310px; flex-shrink: 0;
   background: #ffffff;
   border-left: 1px solid rgba(0,0,0,.08);
   overflow-y: auto; padding: 14px;
@@ -75,13 +76,18 @@ canvas:active { cursor: grabbing; }
   opacity: .5; margin-bottom: 4px;
 }
 .sb-divider { height: 1px; background: rgba(0,0,0,.08); }
+.sb-note { font-size: 11px; line-height: 1.55; opacity: .62; }
+.sb-note + .sb-note { margin-top: 5px; }
+.sb-note b { opacity: .85; }
 
-.stat-row { display: flex; gap: 8px; }
+.stat-row { display: flex; gap: 6px; }
 .stat-box {
-  flex: 1; border: 1px solid rgba(0,0,0,.08); border-radius: 8px;
-  padding: 8px 10px; text-align: center;
+  /* min-width:0 so three boxes share the sidebar instead of overflowing it */
+  flex: 1; min-width: 0;
+  border: 1px solid rgba(0,0,0,.08); border-radius: 8px;
+  padding: 8px 6px; text-align: center;
 }
-.stat-val { font-size: 22px; font-weight: 700; }
+.stat-val { font-size: 18px; font-weight: 700; }
 .stat-lbl { font-size: 10px; opacity: .5; margin-top: 2px; }
 .stat-sub { font-size: 10px; opacity: .4; }
 
@@ -105,7 +111,7 @@ canvas:active { cursor: grabbing; }
 .pair-val { font-weight: 600; }
 
 .axis-legend { font-size: 11px; opacity: .55; padding: 2px 0; }
-.axis-label { font-weight: 700; display: inline-block; width: 18px; color: #2f6fb0; }
+.axis-label { font-weight: 700; display: inline-block; width: 18px; color: #4a7396; }
 
 .layer-section { display: flex; flex-direction: column; gap: 4px; }
 .layer-row { display: flex; align-items: center; gap: 6px; }
@@ -113,15 +119,15 @@ canvas:active { cursor: grabbing; }
 .layer-dots { display: flex; gap: 4px; }
 .ldot {
   width: 18px; height: 18px; border-radius: 50%; cursor: pointer;
-  border: 2px solid rgba(47,111,176,.5); background: rgba(47,111,176,.15);
+  border: 2px solid rgba(74,115,150,.5); background: rgba(74,115,150,.15);
   transition: .12s; font-size: 8px; text-align: center; line-height: 14px;
-  color: rgba(47,111,176,.7);
+  color: rgba(74,115,150,.7);
 }
 .ldot:hover { transform: scale(1.15); }
 .ldot.hidden { background: transparent; border-color: rgba(0,0,0,.12); color: rgba(0,0,0,.25); }
 .show-all-btn {
   padding: 4px 10px; border: none; border-radius: 5px;
-  background: #e8ecf4; color: #2f6fb0; font-size: 11px;
+  background: #e8ecf4; color: #4a7396; font-size: 11px;
   cursor: pointer; transition: .1s;
 }
 .show-all-btn:hover { opacity: .8; }
@@ -130,18 +136,18 @@ canvas:active { cursor: grabbing; }
 <body>
 
 <div id="topbar">
-  <h1>L5 Compositional Generalisation</h1>
+  <h1>Pick&ndash;Place&ndash;Press: all 64 tasks</h1>
   <select id="exp-select"></select>
   <div class="filter-group">
     <span class="filter-label">Show:</span>
     <button class="filter-btn active" data-filter="all" onclick="setFilter('all')">All</button>
-    <button class="filter-btn" data-filter="id" onclick="setFilter('id')">ID only</button>
-    <button class="filter-btn" data-filter="ood" onclick="setFilter('ood')">OOD only</button>
+    <button class="filter-btn" data-filter="id" onclick="setFilter('id')">Trained only</button>
+    <button class="filter-btn" data-filter="ood" onclick="setFilter('ood')">Held-out only</button>
   </div>
   <div class="filter-group">
     <span class="filter-label">Color:</span>
     <button class="filter-btn active" data-cmode="id_ood" onclick="setColorMode('id_ood')">Success rate</button>
-    <button class="filter-btn" data-cmode="pairs" onclick="setColorMode('pairs')">Pair overlap</button>
+    <button class="filter-btn" data-cmode="pairs" onclick="setColorMode('pairs')">Pairs seen in training</button>
   </div>
 </div>
 
@@ -152,8 +158,27 @@ canvas:active { cursor: grabbing; }
   </div>
   <div id="sidebar">
     <div>
+      <div class="sb-title">What you're looking at</div>
+      <p class="sb-note">
+        One small cube = one task: <b>pick</b> an object, <b>place</b> it in a receptacle,
+        then <b>press</b> a coloured button. 4 objects &times; 4 receptacles &times; 4 buttons
+        = <b>64 tasks</b> in total.
+      </p>
+      <p class="sb-note">
+        Pick a training set from the menu above. <b>Blue</b> cubes are tasks it was trained on,
+        <b>orange</b> ones it never saw; darker means a higher success rate. Drag to rotate,
+        scroll to zoom, hover a cube for its numbers.
+      </p>
+    </div>
+    <div class="sb-divider"></div>
+    <div>
       <div class="sb-title">Headline</div>
       <div class="stat-row" id="stats"></div>
+      <p class="sb-note" style="margin-top:6px;">
+        A <b>rollout</b> is one attempt at a task in the simulator, scored success or failure.
+        Each percentage pools every rollout across all tasks in that group and all random
+        seeds, so the counts below say how much evidence is behind it.
+      </p>
     </div>
     <div class="sb-divider"></div>
     <div>
@@ -162,28 +187,38 @@ canvas:active { cursor: grabbing; }
     </div>
     <div class="sb-divider"></div>
     <div>
-      <div class="sb-title">Pair-Overlap Generalisation</div>
+      <div class="sb-title">How much of the task was seen before</div>
+      <p class="sb-note" style="margin-bottom:5px;">
+        A held-out task still shares <em>pairs</em> of ingredients with training &mdash;
+        object+receptacle, object+button, receptacle+button. Grouped by how many of those
+        three pairs appeared in some training task.
+      </p>
       <div id="pair-box"></div>
     </div>
     <div class="sb-divider"></div>
     <div>
-      <div class="sb-title">Factor Rates — Object</div>
+      <div class="sb-title">Success by ingredient</div>
+      <p class="sb-note" style="margin-bottom:6px;">
+        Success rate over all tasks using each object, receptacle, or button &mdash; shows
+        whether one ingredient is harder than the rest.
+      </p>
+      <div class="sb-note" style="margin-bottom:3px;">Object</div>
       <div id="factor-obj" class="factor-grid"></div>
     </div>
     <div>
-      <div class="sb-title">Factor Rates — Receptacle</div>
+      <div class="sb-note" style="margin-bottom:3px;">Receptacle</div>
       <div id="factor-rec" class="factor-grid"></div>
     </div>
     <div>
-      <div class="sb-title">Factor Rates — Button Color</div>
+      <div class="sb-note" style="margin-bottom:3px;">Button colour</div>
       <div id="factor-col" class="factor-grid"></div>
     </div>
     <div class="sb-divider"></div>
     <div>
       <div class="sb-title">Axes</div>
-      <div class="axis-legend"><span class="axis-label">X</span> Object: cross, cube, cylinder, milk</div>
-      <div class="axis-legend"><span class="axis-label">Y</span> Receptacle: bin, mug, plate, mug_no_handle</div>
-      <div class="axis-legend"><span class="axis-label">Z</span> Button: red, green, blue, yellow</div>
+      <div class="axis-legend"><span class="axis-label">X</span> Object picked: cross, cube, cylinder, milk</div>
+      <div class="axis-legend"><span class="axis-label">Y</span> Placed in: bin, mug, plate, mug&nbsp;no&nbsp;handle</div>
+      <div class="axis-legend"><span class="axis-label">Z</span> Button pressed: red, green, blue, yellow</div>
     </div>
     <div class="sb-divider"></div>
     <div>
@@ -211,31 +246,65 @@ const renderer = new THREE.WebGLRenderer({ canvas: cvs, antialias: true });
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 renderer.setClearColor(0xeef1f6, 1);
 
+// ── cube geometry ────────────────────────────────────────────────────────────
+// Declared before the camera because fitCam() reads EDGE on first resize().
+// PITCH is the centre-to-centre spacing of the blocks; with the block size S (see the
+// blocks section) the visible gap between neighbours is PITCH - S, so raising PITCH alone
+// spreads the cube out without changing how big each block reads. EDGE trails PITCH so
+// the axis labels stay just outside the outermost blocks.
+const PITCH = 1.70;
+const POS = [-1.5, -.5, .5, 1.5].map((k) => k * PITCH);
+const EDGE = 1.5 * PITCH + 1.35;
+
 const scene  = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(38, 1, .1, 200);
-let camR = 13, camT = -0.55, camP = 0.45;
+// camR is derived from the cube's extent in fitCam() rather than hand-tuned, so changing
+// PITCH (below) reframes the view automatically instead of cropping it.
+let camR = 18, camT = -0.55, camP = 0.45;
+let userZoomed = false;
+
+// The axis labels hang off the negative side of each axis only, so the content is not
+// centred on the origin. Aim a little that way, or the labelled corner clips.
+const AIM = -0.55;
 
 function setCam() {
   camera.position.set(
-    camR * Math.sin(camT) * Math.cos(camP),
-    camR * Math.sin(camP),
-    camR * Math.cos(camT) * Math.cos(camP));
-  camera.lookAt(0, 0, 0);
+    AIM + camR * Math.sin(camT) * Math.cos(camP),
+    AIM + camR * Math.sin(camP),
+    AIM + camR * Math.cos(camT) * Math.cos(camP));
+  camera.lookAt(AIM, AIM, AIM);
 }
 setCam();
+
+// Distance at which the whole labelled cube fits, honouring BOTH axes: for a perspective
+// camera the horizontal field of view is the vertical one scaled by the aspect ratio, so a
+// narrow viewport needs a larger radius than the vertical fit alone would suggest.
+function fitCam() {
+  if (userZoomed) return;
+  const vFov = camera.fov * Math.PI / 180;
+  const hFov = 2 * Math.atan(Math.tan(vFov / 2) * camera.aspect);
+  // Half-extent of the content, including the axis labels sitting out at EDGE.
+  const half = (EDGE + 0.9) * Math.SQRT2;
+  camR = Math.max(half / Math.tan(vFov / 2), half / Math.tan(hFov / 2));
+  setCam();
+}
 
 function resize() {
   const w = vp.clientWidth, h = vp.clientHeight;
   renderer.setSize(w, h, false);
   camera.aspect = w / h; camera.updateProjectionMatrix();
+  fitCam();
 }
 resize();
 window.addEventListener('resize', resize);
 
-scene.add(new THREE.AmbientLight(0xffffff, .5));
-const sun = new THREE.DirectionalLight(0xffffff, .85);
+// Lighting is deliberately flat: mostly ambient with a weak directional, so a block's
+// colour comes from its data value rather than from which way its faces happen to point.
+// Turning the directional light up makes the darker faces read as a different series.
+scene.add(new THREE.AmbientLight(0xffffff, .88));
+const sun = new THREE.DirectionalLight(0xffffff, .28);
 sun.position.set(7, 10, 8); scene.add(sun);
-const fill = new THREE.DirectionalLight(0x6677cc, .3);
+const fill = new THREE.DirectionalLight(0xaab4d0, .12);
 fill.position.set(-5, -5, -7); scene.add(fill);
 
 // ── axis labels ──────────────────────────────────────────────────────────────
@@ -255,8 +324,6 @@ function makeLabel(text, pos, color) {
   return sp;
 }
 
-const POS = [-1.7, -.57, .57, 1.7];
-const EDGE = 2.8;
 OBJECTS.forEach((o, i) => makeLabel(o, new THREE.Vector3(POS[i], -EDGE, -EDGE)));
 RECS.forEach((r, i) => makeLabel(r.replace('_',' '), new THREE.Vector3(-EDGE, POS[i], -EDGE)));
 COLORS.forEach((c, i) => makeLabel(c, new THREE.Vector3(-EDGE, -EDGE, POS[i])));
@@ -269,8 +336,18 @@ const S   = .86;
 const GEO = new THREE.BoxGeometry(S, S, S);
 const EGEO= new THREE.EdgesGeometry(GEO);
 
-const ID_HUE  = [.58, .50, .5];
-const OOD_HUE = [.08, .55, .5];
+// Per-series hue, saturation, and lightness ramp [light@0%, light@100%].
+// The two series have to stay tellable apart when hundreds of translucent blocks overlap,
+// so they are separated on lightness as well as hue: held-out is a distinctly LIGHTER
+// orange than the trained blue is a blue. Keep the ranges from overlapping.
+const ID_HUE  = [.578, .36, .70, .46];
+const OOD_HUE = [.072, .70, .82, .63];
+
+// Text-weight versions of the two series colours. The block ramps above are deliberately
+// pale so hundreds of translucent cubes stay legible, which is too light to read as type —
+// these are the same hues taken darker, for labels and numbers in the sidebar/tooltip.
+const SERIES_ID_TEXT  = '#3f6b91';
+const SERIES_OOD_TEXT = '#b9702f';
 const MISS_COL= 0xc7ccd6;
 
 // Fixed pseudo-rate (0–100) fed into the OOD color function for each pair bin.
@@ -290,9 +367,9 @@ function hslToHex(h, s, l) {
 function cellColor(isId, rate) {
   if (rate === null || rate === undefined) return MISS_COL;
   const t = rate / 100;
-  const light = .70 - t * .22;
-  return isId ? hslToHex(ID_HUE[0], ID_HUE[1], light)
-              : hslToHex(OOD_HUE[0], OOD_HUE[1], light);
+  const h = isId ? ID_HUE : OOD_HUE;
+  // h[2] is the 0% lightness, h[3] the 100% lightness — higher success reads darker.
+  return hslToHex(h[0], h[1], h[2] + (h[3] - h[2]) * t);
 }
 
 function cellColorByPairs(pairOverlap, rate) {
@@ -308,13 +385,18 @@ function getBlockColor(cell) {
     : cellColor(cell.is_id, cell.mean_success);
 }
 
-function cellOpacity(rate) {
-  if (rate === null || rate === undefined) return .12;
-  return .30 + (rate / 100) * .45;
+// Opacity is FLAT within a series — it deliberately does not encode the success rate.
+// Success is already carried by lightness in cellColor(); when opacity varied with it too,
+// the same series rendered from pale wash to deep navy and read as two different colours.
+// The only difference between the series is that held-out blocks outnumber trained ones by
+// roughly 3:1, so they sit slightly more transparent to keep the blue set visible.
+function cellOpacity(rate, isId) {
+  if (rate === null || rate === undefined) return .10;
+  return isId ? .78 : .50;
 }
 
 function pairLabel(cell) {
-  if (cell.pair_overlap === 'train') return 'Exact train';
+  if (cell.pair_overlap === 'train') return 'all 3 (this exact task was trained on)';
   if (cell.pair_overlap === '1_pair') return '1 seen pair';
   if (cell.pair_overlap) return cell.pair_overlap.replace('_pair', ' seen pairs');
   return 'n/a';
@@ -327,18 +409,22 @@ function buildBlocks(cells) {
   cells.forEach(c => {
     const [xi, yi, zi] = c.coords;
     const col = getBlockColor(c);
-    const op  = cellOpacity(c.mean_success);
+    const op  = cellOpacity(c.mean_success, c.is_id);
 
-    const mesh = new THREE.Mesh(GEO, new THREE.MeshPhongMaterial({
+    // MeshLambertMaterial, not Phong: specular highlights on a few hundred overlapping
+    // translucent cubes read as noise, and they hit the orange series hardest (its faces are
+    // lighter, so a highlight blows out to near-white and the block loses its colour).
+    // Flat diffuse shading keeps every face's hue legible.
+    const mesh = new THREE.Mesh(GEO, new THREE.MeshLambertMaterial({
       color: col, transparent: true, opacity: op,
-      side: THREE.DoubleSide, depthWrite: false, shininess: 60,
+      side: THREE.DoubleSide, depthWrite: false,
     }));
     mesh.position.set(POS[xi], POS[yi], POS[zi]);
     mesh.renderOrder = 1;
 
     const edgeCol = c.mean_success != null ? col : 0x99a3b3;
     const lines = new THREE.LineSegments(EGEO, new THREE.LineBasicMaterial({
-      color: edgeCol, transparent: true, opacity: Math.min(1, op + .3),
+      color: edgeCol, transparent: true, opacity: Math.min(.85, op + .2),
     }));
     lines.position.copy(mesh.position);
     lines.renderOrder = 2;
@@ -433,19 +519,19 @@ function renderLegend() {
     r.appendChild(sw); r.appendChild(t); legBox.appendChild(r);
   }
   if (colorMode === 'pairs') {
-    addLeg(cellColor(true, 75),    'Train (exact) — blue');
-    addLeg(cellColor(false, 100),  '3 seen pairs — brightest orange');
-    addLeg(cellColor(false, 65),   '2 seen pairs');
-    addLeg(cellColor(false, 35),   '1 seen pair');
-    addLeg(cellColor(false, 5),    '0 seen pairs — darkest orange');
+    addLeg(cellColor(true, 75),    'Trained on this task');
+    addLeg(cellColor(false, 100),  'Held out — all 3 pairs seen');
+    addLeg(cellColor(false, 65),   'Held out — 2 pairs seen');
+    addLeg(cellColor(false, 35),   'Held out — 1 pair seen');
+    addLeg(cellColor(false, 5),    'Held out — no pair seen');
     addLeg(MISS_COL, 'Not evaluated');
   } else {
-    addLeg(cellColor(true,  100), 'ID 100%');
-    addLeg(cellColor(true,   50), 'ID 50%');
-    addLeg(cellColor(true,    0), 'ID 0%');
-    addLeg(cellColor(false, 100), 'OOD 100%');
-    addLeg(cellColor(false,  50), 'OOD 50%');
-    addLeg(cellColor(false,   0), 'OOD 0%');
+    addLeg(cellColor(true,  100), 'Trained — 100% success');
+    addLeg(cellColor(true,   50), 'Trained — 50%');
+    addLeg(cellColor(true,    0), 'Trained — 0%');
+    addLeg(cellColor(false, 100), 'Held out — 100% success');
+    addLeg(cellColor(false,  50), 'Held out — 50%');
+    addLeg(cellColor(false,   0), 'Held out — 0%');
     addLeg(MISS_COL, 'Not evaluated');
   }
 }
@@ -457,26 +543,27 @@ function renderSidebar() {
   statsBox.innerHTML = '';
   function addStat(val, lbl, sub, color) {
     const d = document.createElement('div'); d.className = 'stat-box';
-    d.innerHTML = '<div class="stat-val" style="color:' + (color||'#2f6fb0') + '">' + val + '</div>'
+    d.innerHTML = '<div class="stat-val" style="color:' + (color||'#4a7396') + '">' + val + '</div>'
       + '<div class="stat-lbl">' + lbl + '</div>'
       + (sub ? '<div class="stat-sub">' + sub + '</div>' : '');
     statsBox.appendChild(d);
   }
-  addStat(exp.n_train, 'Train tasks', '/ 64 total');
-  addStat(exp.id_rate != null ? exp.id_rate + '%' : 'n/a', 'ID success', exp.id_episodes + ' ep', '#2f6fb0');
-  addStat(exp.ood_rate != null ? exp.ood_rate + '%' : 'n/a', 'OOD success',
-    exp.ood_episodes > 0 ? exp.ood_episodes + ' ep' : 'not evaluated', '#c2710c');
+  addStat(exp.n_train, 'Trained on', 'of 64 tasks');
+  addStat(exp.id_rate != null ? exp.id_rate + '%' : 'n/a', 'Trained tasks',
+    exp.id_episodes + ' rollouts', SERIES_ID_TEXT);
+  addStat(exp.ood_rate != null ? exp.ood_rate + '%' : 'n/a', 'Held-out tasks',
+    exp.ood_episodes > 0 ? exp.ood_episodes + ' rollouts' : 'not evaluated', SERIES_OOD_TEXT);
 
   renderLegend();
 
   const pairBox = document.getElementById('pair-box');
   pairBox.innerHTML = '';
-  const pairLabels = { train: 'Exact train', '3_pair': '3 seen pairs', '2_pair': '2 seen pairs', '1_pair': '1 seen pair', '0_pair': '0 seen pairs' };
+  const pairLabels = { train: 'Trained on', '3_pair': 'Held out, 3 pairs seen', '2_pair': 'Held out, 2 pairs seen', '1_pair': 'Held out, 1 pair seen', '0_pair': 'Held out, no pair seen' };
   for (const [k, lab] of Object.entries(pairLabels)) {
     const p = exp.pair_overlap[k];
     if (!p) continue;
     const r = document.createElement('div'); r.className = 'pair-row';
-    r.innerHTML = '<span class="pair-label">' + lab + ' (' + p.episodes + ' ep)</span><span class="pair-val">' + p.pc_success + '%</span>';
+    r.innerHTML = '<span class="pair-label">' + lab + ' (' + p.episodes + ' rollouts)</span><span class="pair-val">' + p.pc_success + '%</span>';
     pairBox.appendChild(r);
   }
 
@@ -485,7 +572,7 @@ function renderSidebar() {
     const rates = exp.factor_rates[dim];
     for (const [name, val] of Object.entries(rates)) {
       const c = document.createElement('div'); c.className = 'factor-cell';
-      const bg = val != null ? 'rgba(47,111,176,' + (.05 + val / 100 * .18) + ')' : 'transparent';
+      const bg = val != null ? 'rgba(74,115,150,' + (.05 + val / 100 * .18) + ')' : 'transparent';
       c.style.background = bg;
       c.innerHTML = '<span class="fc-name">' + name.replace('_',' ') + '</span><span class="fc-val">' + (val != null ? val + '%' : '—') + '</span>';
       el.appendChild(c);
@@ -547,7 +634,8 @@ function setHover(b) {
   if (b === hovBlk) return;
   if (hovBlk) {
     hovBlk.lines.material.color.setHex(hovBlk.baseCol);
-    hovBlk.lines.material.opacity = Math.min(1, hovBlk.baseOp + .3);
+    // must match the edge opacity used in buildBlocks, or un-hovering leaves it brighter
+    hovBlk.lines.material.opacity = Math.min(.85, hovBlk.baseOp + .2);
   }
   hovBlk = b;
   if (b) { b.lines.material.color.setHex(0x111418); b.lines.material.opacity = 1; }
@@ -557,8 +645,9 @@ function showTooltip(blk, ex, ey) {
   if (!blk) { ttEl.style.display = 'none'; setHover(null); return; }
   setHover(blk);
   const c = blk.cell;
-  const idLabel = c.is_id ? '<span class="tt-id" style="color:#2f6fb0">In-Distribution</span>'
-                          : '<span class="tt-id" style="color:#c2710c">Out-of-Distribution</span>';
+  const idLabel = c.is_id
+    ? '<span class="tt-id" style="color:' + SERIES_ID_TEXT + '">Trained on this task</span>'
+    : '<span class="tt-id" style="color:' + SERIES_OOD_TEXT + '">Held out &mdash; never trained on</span>';
   const rateStr = c.mean_success != null ? c.mean_success.toFixed(1) + '%' : 'not evaluated';
   const sdStr   = c.sd != null && c.n_seeds > 1 ? ' (sd ' + c.sd.toFixed(1) + ')' : '';
   const seedStr = c.n_seeds > 0 ? c.n_seeds + ' seed' + (c.n_seeds > 1 ? 's' : '') : 'no data';
@@ -566,15 +655,17 @@ function showTooltip(blk, ex, ey) {
   const barW = c.mean_success != null ? Math.max(2, c.mean_success) : 0;
   const barCol = colorMode === 'pairs'
     ? '#' + cellColorByPairs(c.pair_overlap, c.mean_success).toString(16).padStart(6, '0')
-    : (c.is_id ? '#2f6fb0' : '#c2710c');
+    : (c.is_id ? SERIES_ID_TEXT : SERIES_OOD_TEXT);
 
   ttEl.innerHTML = '<div class="tt-task">' + c.task.replace(/_/g, ' ') + '</div>'
     + '<div>' + idLabel + '</div>'
-    + '<div><span class="tt-label">Pairs:</span> ' + pairLabel(c) + '</div>'
-    + '<div><span class="tt-label">Support:</span> ' + c.support_sum + ' (OR=' + c.n_or + ' OC=' + c.n_oc + ' RC=' + c.n_rc + ')</div>'
+    + '<div><span class="tt-label">Seen pairs:</span> ' + pairLabel(c) + '</div>'
+    + '<div><span class="tt-label">Training tasks sharing a pair:</span> ' + c.support_sum
+      + ' (object+receptacle ' + c.n_or + ', object+button ' + c.n_oc
+      + ', receptacle+button ' + c.n_rc + ')</div>'
     + '<div><span class="tt-label">Success:</span> ' + rateStr + sdStr + '</div>'
     + '<div><span class="tt-label">Seeds:</span> ' + seedStr + '</div>'
-    + (perSeed ? '<div><span class="tt-label">Per-seed:</span> ' + perSeed + '</div>' : '')
+    + (perSeed ? '<div><span class="tt-label">Each seed:</span> ' + perSeed + '</div>' : '')
     + '<div class="tt-bar" style="width:' + barW + '%;background:' + barCol + '"></div>';
 
   const rect = cvs.getBoundingClientRect();
@@ -604,7 +695,11 @@ window.addEventListener('mousemove', e => {
 });
 window.addEventListener('mouseup', () => { dragging = false; });
 cvs.addEventListener('mouseleave', () => { dragging = false; setHover(null); ttEl.style.display = 'none'; });
-cvs.addEventListener('wheel', e => { camR = Math.max(5, Math.min(28, camR + e.deltaY * .013)); setCam(); e.preventDefault(); }, { passive: false });
+cvs.addEventListener('wheel', e => {
+  userZoomed = true;  // stop resize() from snapping back to the fitted distance
+  camR = Math.max(6, Math.min(46, camR + e.deltaY * .016));
+  setCam(); e.preventDefault();
+}, { passive: false });
 
 let ltx = 0, lty = 0;
 cvs.addEventListener('touchstart', e => { ltx = e.touches[0].clientX; lty = e.touches[0].clientY; e.preventDefault(); }, { passive: false });
