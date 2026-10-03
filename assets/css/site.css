@@ -1,0 +1,753 @@
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg: #eef1f6;
+  --panel: #ffffff;
+  --text: #1f2733;
+  --text-muted: #5a6577;
+  --accent: #2f6fb0;
+  --accent-light: rgba(47,111,176,.08);
+  --amber: #c2710c;
+  --border: rgba(0,0,0,.08);
+  --border-strong: #dfe4ec;
+  --radius: 10px;
+  --shadow: 0 4px 24px rgba(0,0,0,.06);
+  --max-w: 1080px;
+
+  /* Shared data-series palette — read by the figure scripts via window.ResearchSite.colors,
+     so the swatches below and the canvas strokes cannot drift apart. */
+  --series-id: #2E7D32;
+  --series-ood: #C5582D;
+  --series-blue: #1F4E9E;
+  --series-before: #b0b7c3;
+  --series-grid: #e6e9ef;
+  --series-axis: #3a4453;
+  --cov-ring: rgba(31,78,158,.16);
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+.container {
+  max-width: var(--max-w);
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* Hero */
+.hero {
+  text-align: center;
+  padding: 72px 24px 48px;
+}
+.hero h1 {
+  font-size: clamp(1.5rem, 4vw, 2.1rem);
+  font-weight: 700;
+  line-height: 1.3;
+  margin-bottom: 16px;
+  color: var(--text);
+}
+.hero .authors {
+  font-size: 15px;
+  color: var(--text);
+  line-height: 1.6;
+  margin-bottom: 6px;
+}
+.hero .authors sup { font-size: 11px; color: var(--accent); }
+.hero .affils {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 24px;
+}
+.hero .affils sup { font-size: 10px; color: var(--accent); }
+.hero .affils span { white-space: nowrap; }
+.hero .affils span + span { margin-left: 20px; }
+.hero .links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+.hero .links a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 18px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  color: var(--accent);
+  border: 1px solid rgba(47,111,176,.3);
+  background: var(--panel);
+  transition: background .15s, border-color .15s;
+}
+.hero .links a:hover {
+  background: var(--accent-light);
+  border-color: var(--accent);
+}
+
+/* Sections */
+section {
+  margin-bottom: 56px;
+}
+section h2 {
+  font-size: 1.35rem;
+  font-weight: 700;
+  margin-bottom: 16px;
+  color: var(--text);
+}
+section h3 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin: 20px 0 8px;
+  color: var(--text);
+}
+
+/* TL;DR stat cards */
+.tldr-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin: 24px 0;
+}
+.stat-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px 16px;
+  text-align: center;
+}
+.stat-card .number {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--accent);
+  margin-bottom: 6px;
+}
+.stat-card .number.amber { color: var(--amber); }
+.stat-card .label {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+/* Abstract panel */
+.abstract-panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 28px 32px;
+  font-size: 14.5px;
+  line-height: 1.8;
+}
+
+/* Viewer iframe — constrained to the same column as every other block */
+.viewer-frame {
+  position: relative;
+  width: 100%;
+  height: 80vh;
+  min-height: 560px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+.viewer-frame iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+}
+.viewer-header {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 8px;
+}
+.viewer-header a {
+  font-size: 12px;
+  color: var(--accent);
+  text-decoration: none;
+  border-bottom: 1px dashed var(--accent);
+}
+.section-lead {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Inline figures (Q1–Q3)
+
+   Each homepage figure has its own script in assets/js/home/. Its markup stays
+   in the homepage, so these figures need no iframe height measurement.
+   Every rule below is scoped to #q1 / #q2 / #q3 because the source pages share
+   class names (.legend, .controls, .footnote, .card) that would otherwise clash.
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.exp { margin-bottom: 48px; }
+.exp > h3 { margin-top: 0; }
+.exp .fig-caption {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 18px;
+}
+
+/* Shared card surface for all three figures */
+#q1 .chart-panel,
+#q2 .chart-container,
+#q3 .card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+#q1 .chart-panel h4,
+#q2 .chart-container h4,
+#q3 .card h4 {
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 2px;
+  color: var(--text);
+  line-height: 1.4;
+}
+#q1 .chart-desc,
+#q2 .chart-desc,
+#q3 .lead {
+  font-size: 12.5px;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin-bottom: 14px;
+}
+
+/* Shared legend */
+.exp .legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  justify-content: center;
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+.exp .legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.exp .legend-swatch,
+.exp .swatch {
+  width: 13px;
+  height: 13px;
+  border-radius: 3px;
+  flex: none;
+}
+
+/* Shared small print */
+.exp .takeaway,
+.exp .caveat,
+.exp .footnote,
+.exp .budget-note {
+  text-align: center;
+  color: var(--text-muted);
+  line-height: 1.55;
+  margin-left: auto;
+  margin-right: auto;
+}
+.exp .takeaway {
+  font-size: 13.5px;
+  color: var(--text);
+  max-width: 660px;
+  margin-top: 18px;
+}
+.exp .takeaway strong { color: var(--series-blue); }
+.exp .caveat {
+  font-size: 12.5px;
+  max-width: 720px;
+  margin-top: 12px;
+}
+.exp .footnote {
+  font-size: 12px;
+  max-width: 720px;
+  margin-top: 12px;
+  opacity: .85;
+}
+
+/* ── Q1 ── */
+/* The viewer sits at the end of Q1, so it needs air above it and its own heading rhythm */
+#q1 .viewer-header { margin-top: 34px; }
+/* Q1's chart draws its own legend inside the canvas (drawLegend), so there is no HTML one. */
+
+/* ── Orthogonal-16 structure diagram ──
+   16 rows × 3 factor cells. The three factors share one hue ramp per factor so that a
+   column reads as "four values, each four times" at a glance; the row-level animation
+   just reveals them top to bottom. */
+#q1 .ortho-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 3px;
+  margin-bottom: 12px;
+}
+#q1 .ocell {
+  height: 17px;
+  border-radius: 3px;
+  opacity: 0;
+  transform: translateY(-3px);
+  transition: opacity .28s ease, transform .28s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 8.5px;
+  font-weight: 600;
+  letter-spacing: .2px;
+  color: rgba(255, 255, 255, .95);
+  overflow: hidden;
+  white-space: nowrap;
+}
+#q1 .ocell.on { opacity: 1; transform: none; }
+#q1 .ortho-head {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 3px;
+  margin-bottom: 5px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-align: center;
+}
+#q1 .ortho-key {
+  display: flex;
+  gap: 14px;
+  justify-content: center;
+  font-size: 10.5px;
+  color: var(--text-muted);
+}
+#q1 .ortho-key i {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+  margin-right: 4px;
+  vertical-align: -1px;
+}
+#q1 .ortho-key .ok-o { background: #2E7D32; }
+#q1 .ortho-key .ok-r { background: #1F4E9E; }
+#q1 .ortho-key .ok-b { background: #C5582D; }
+#q1 #orthoPanel { display: flex; flex-direction: column; }
+
+#q1 .charts-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: center;
+}
+/* The structure panel is narrower than the chart — it holds 3 label columns, not a plot. */
+#q1 #orthoPanel {
+  padding: 18px 20px;
+  flex: 0 1 330px;
+  min-width: 260px;
+}
+#q1 .chart-panel:not(#orthoPanel) {
+  padding: 18px 20px;
+  flex: 1 1 520px;
+  max-width: 640px;
+  min-width: 300px;
+}
+#q1 canvas {
+  width: 100%;
+  /* matches the orthogonal grid's natural height so the two panels sit level */
+  height: 400px;
+  display: block;
+}
+
+/* ── Q2 ── */
+#q2 .legend { margin-bottom: 18px; }
+#q2 .chart-container {
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 20px 22px;
+}
+#q2 canvas {
+  width: 100%;
+  height: 400px;
+  display: block;
+}
+
+/* ── Q3 ── */
+#q3 .card {
+  padding: 18px 20px 20px;
+  margin-bottom: 16px;
+}
+
+/* Robot rollout figure — the PNG's background is transparent, so the panel
+   surface shows through and the figure sits flush with the surrounding card. */
+#q3 .task-figure {
+  margin: 0 0 12px;
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--panel);
+  line-height: 0;
+}
+#q3 .task-figure img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+#q3 .task-caption {
+  margin-top: 12px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--text);
+  background: #e8eef8;
+  border-radius: 8px;
+  padding: 9px 13px;
+  line-height: 1.55;
+}
+#q3 .task-caption strong { color: var(--series-blue); }
+
+/* Coverage board + counters */
+#q3 .controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  margin-bottom: 14px;
+}
+#q3 .controls label {
+  font-size: 13px;
+  font-weight: 650;
+  margin-right: 2px;
+}
+#q3 .cov-btn {
+  font-family: inherit;
+  border: 1.5px solid #d0d5dd;
+  background: var(--panel);
+  color: var(--text);
+  border-radius: 7px;
+  padding: 5px 11px;
+  font-size: 13px;
+  font-weight: 650;
+  cursor: pointer;
+  transition: border-color .15s, color .15s, background .15s;
+}
+#q3 .cov-btn:hover { border-color: var(--series-blue); color: var(--series-blue); }
+#q3 .cov-btn.active {
+  background: var(--series-blue);
+  border-color: var(--series-blue);
+  color: #fff;
+}
+
+/* The instruction template above the board — names the two axes in situ. */
+#q3 .instr {
+  font-size: 13.5px;
+  line-height: 2.1;
+  margin-bottom: 4px;
+}
+#q3 .instr .slotname {
+  font-weight: 700;
+  border-radius: 5px;
+  padding: 2px 7px;
+}
+#q3 .instr .o1 { background: rgba(31,78,158,.10); color: var(--series-blue); }
+#q3 .instr .c2 { background: rgba(197,88,45,.12); color: var(--series-ood); }
+#q3 .instr .unknown {
+  font-weight: 700;
+  color: var(--text-muted);
+  border-bottom: 2px dotted var(--text-muted);
+}
+
+/* ── The board: 4 (o1) x 4 (c2) combination cells, each holding one slot per
+   candidate c1. Slot order is C1_POOL order and column order is the SAME array,
+   which is what makes the forbidden slots fall on a diagonal staircase. That
+   shared order is load-bearing: reorder either and the central visual argument
+   silently disappears while the figure still looks fine. ── */
+#q3 .board {
+  display: grid;
+  grid-template-columns: 64px repeat(4, minmax(0, 1fr));
+  gap: 6px 7px;
+  align-items: center;
+  max-width: 100%;
+}
+#q3 .board .blab, #q3 .board .olab {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-align: center;
+}
+#q3 .board .olab { text-align: right; padding-right: 2px; }
+#q3 .bcell {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 3px;
+  padding: 4px;
+  border: 1.5px solid var(--border-strong);
+  border-radius: 6px;
+  background: var(--bg);
+  cursor: pointer;
+  font: inherit;
+  transition: border-color .3s, box-shadow .3s, background .3s;
+}
+/* Covered = this (o1,c2) combination appears in training. A RING, deliberately
+   not a fill: the fill inside means something different (which c1 was shown). */
+#q3 .bcell.covered {
+  border-color: var(--series-blue);
+  box-shadow: 0 0 0 2px var(--cov-ring);
+  background: var(--panel);
+}
+#q3 .bcell.sel { outline: 2px solid var(--series-ood); outline-offset: 2px; }
+#q3 .bcell:focus-visible { outline: 2px solid var(--series-blue); outline-offset: 2px; }
+#q3 .bslot {
+  aspect-ratio: 1;
+  border-radius: 2px;
+  background: #dfe4ec;
+  min-height: 9px;
+  transition: background .3s;
+}
+/* Demonstrated c1. Rendered softer than the exact marks because WHICH c1 was
+   shown is illustrative — the logs do not record it. */
+#q3 .bcell.covered .bslot.shown { background: rgba(31,78,158,.62); }
+/* c1 = c2. Forbidden in every condition, so it never depends on coverage. */
+#q3 .bslot.forbidden,
+#q3 .bcell.covered .bslot.forbidden {
+  background: rgba(197,88,45,.13);
+  position: relative;
+}
+#q3 .bslot.forbidden::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(to bottom right, transparent calc(50% - 0.9px), var(--series-ood) calc(50% - 0.9px), var(--series-ood) calc(50% + 0.9px), transparent calc(50% + 0.9px)),
+    linear-gradient(to bottom left, transparent calc(50% - 0.9px), var(--series-ood) calc(50% - 0.9px), var(--series-ood) calc(50% + 0.9px), transparent calc(50% + 0.9px));
+}
+#q3 .board-xtitle, #q3 .board-ytitle {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+#q3 .board-xtitle { text-align: center; margin: 0 0 5px 64px; }
+
+#q3 .board-key {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin-top: 11px;
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+#q3 .board-key span { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+#q3 .board-key sub { font-size: 8.5px; line-height: 0; }
+#q3 .board-key i { width: 12px; height: 12px; border-radius: 2px; flex-shrink: 0; }
+#q3 .board-key i.k-ring {
+  background: var(--panel);
+  border: 1.5px solid var(--series-blue);
+  box-shadow: 0 0 0 1.5px var(--cov-ring);
+}
+#q3 .board-key i.k-out { background: var(--bg); border: 1.5px solid var(--border-strong); }
+#q3 .board-key i.k-shown { background: rgba(31,78,158,.62); }
+#q3 .board-key i.k-never { background: #dfe4ec; }
+#q3 .board-key i.k-forbidden { background: rgba(197,88,45,.13); position: relative; }
+#q3 .board-key i.k-forbidden::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(to bottom right, transparent calc(50% - 0.9px), var(--series-ood) calc(50% - 0.9px), var(--series-ood) calc(50% + 0.9px), transparent calc(50% + 0.9px)),
+    linear-gradient(to bottom left, transparent calc(50% - 0.9px), var(--series-ood) calc(50% - 0.9px), var(--series-ood) calc(50% + 0.9px), transparent calc(50% + 0.9px));
+}
+
+/* Counters — restate combinations AND tasks side by side on every change, so the
+   two encodings can never collapse into one another in the reader's head. */
+#q3 .counters {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 15px;
+}
+#q3 .counter {
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  padding: 8px 11px;
+  background: var(--panel);
+}
+#q3 .counter .cnum {
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--series-blue);
+  line-height: 1.25;
+}
+#q3 .counter .cnum.fixed { color: var(--text); }
+#q3 .counter .clab {
+  font-size: 10.5px;
+  font-weight: 650;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+/* ── The expansion: the selected cell redrawn once at full size. The rule is
+   stated legibly here instead of 16 times in miniature on the board. ── */
+#q3 .expansion {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-strong);
+}
+#q3 .expansion .exp-instr {
+  font-size: 13px;
+  margin-bottom: 12px;
+  line-height: 1.6;
+}
+#q3 .cslots {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+#q3 .cslot {
+  border: 2px solid var(--border-strong);
+  border-radius: 9px;
+  padding: 10px 4px 8px;
+  text-align: center;
+  background: var(--bg);
+}
+#q3 .cslot .cs-name {
+  font-size: 11px;
+  font-weight: 700;
+  margin-bottom: 6px;
+  color: var(--text);
+}
+#q3 .cslot .cs-mark {
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+#q3 .cslot .cs-sub { font-size: 10px; line-height: 1.35; }
+#q3 .cslot.legal {
+  border-color: var(--series-blue);
+  background: rgba(31,78,158,.06);
+}
+#q3 .cslot.legal .cs-mark, #q3 .cslot.legal .cs-sub { color: var(--series-blue); }
+#q3 .cslot.reserved {
+  border-color: var(--series-ood);
+  background: rgba(197,88,45,.10);
+}
+#q3 .cslot.reserved .cs-mark, #q3 .cslot.reserved .cs-sub { color: var(--series-ood); }
+#q3 .exp-note {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 11px;
+  line-height: 1.55;
+}
+#q3 .illus-note {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-strong);
+  line-height: 1.5;
+  font-style: italic;
+}
+
+/* Two-column split: coverage board left, the curve it drives right, so clicking a
+   condition never scrolls its own effect off-screen. */
+#q3 .q3-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+  gap: 26px;
+  align-items: start;
+}
+#q3 .q3-left, #q3 .q3-right { min-width: 0; }
+#q3 .q3-right { position: sticky; top: 16px; }
+#q3 .q3-takeaway {
+  font-size: 12.5px;
+  color: var(--text);
+  line-height: 1.55;
+  margin-top: 12px;
+}
+#q3 .q3-takeaway strong { color: var(--series-blue); }
+#q3 .q3-right .board-xtitle { margin-left: 0; }
+
+/* Chart */
+#q3 .chart-wrap {
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  padding: 10px 12px 8px;
+  background: var(--panel);
+}
+#q3 canvas {
+  width: 100%;
+  height: 300px;
+  display: block;
+}
+#q3 .chart-wrap .legend { margin-top: 8px; }
+
+/* Citation */
+.bibtex-block {
+  position: relative;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px 24px;
+  overflow-x: auto;
+}
+.bibtex-block pre {
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: 12.5px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  color: var(--text);
+}
+.bibtex-block .copy-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  padding: 4px 12px;
+  border-radius: 5px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  font-family: inherit;
+  font-size: 11px;
+  cursor: pointer;
+  color: var(--text-muted);
+}
+.bibtex-block .copy-btn:hover { color: var(--accent); border-color: var(--accent); }
+
+/* Footer */
+footer {
+  text-align: center;
+  padding: 32px 24px 48px;
+  font-size: 12px;
+  color: var(--text-muted);
+  border-top: 1px solid var(--border);
+}
+footer a { color: var(--accent); text-decoration: none; }
+
+/* Responsive */
+@media (max-width: 900px) {
+  /* Below this the two columns are too narrow to read; stack and drop the sticky. */
+  #q3 .q3-split { grid-template-columns: 1fr; gap: 22px; }
+  #q3 .q3-right { position: static; }
+}
+@media (max-width: 760px) {
+  #q3 canvas { height: 260px; }
+  /* Slots must stay legible before they stay square; the board is the widest thing here. */
+  #q3 .board { grid-template-columns: 54px repeat(4, minmax(0, 1fr)); gap: 5px 6px; }
+  #q3 .board .blab, #q3 .board .olab { font-size: 9.5px; }
+  #q3 .board-xtitle { margin-left: 54px; }
+  #q3 .cslots { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  #q3 .counters { grid-template-columns: 1fr; }
+}
+@media (max-width: 600px) {
+  .hero { padding: 48px 16px 32px; }
+  .abstract-panel { padding: 20px 18px; }
+  .viewer-frame { height: 70vh; min-height: 420px; }
+  .tldr-strip { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #q3 .bcell, #q3 .bslot, #q1 .ocell { transition: none !important; }
+}

@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pick-Place-Press Task Cube</title>
+<link rel="stylesheet" href="../assets/css/results.css">
+</head>
+<body>
+
+<div id="topbar">
+  <h1>Pick&ndash;Place&ndash;Press: all 64 tasks</h1>
+  <select disabled id="exp-select"></select>
+  <div class="filter-group">
+    <span class="filter-label">Show:</span>
+    <button disabled class="filter-btn active" data-filter="all">All</button>
+    <button disabled class="filter-btn" data-filter="id">Trained only</button>
+    <button disabled class="filter-btn" data-filter="ood">Held-out only</button>
+  </div>
+  <div class="filter-group">
+    <span class="filter-label">Color:</span>
+    <button disabled class="filter-btn active" data-cmode="id_ood">Success rate</button>
+    <button disabled class="filter-btn" data-cmode="pairs">Pairs seen in training</button>
+  </div>
+</div>
+
+<div id="main">
+  <div id="viewport" data-results-src="data.json">
+    <p id="viewer-status" role="status">Loading results...</p>
+    <canvas id="c"></canvas>
+    <div id="tooltip"></div>
+  </div>
+  <div id="sidebar">
+    <div>
+      <div class="sb-title">What you're looking at</div>
+      <p class="sb-note">
+        One small cube = one task: <b>pick</b> an object, <b>place</b> it in a receptacle,
+        then <b>press</b> a coloured button. 4 objects &times; 4 receptacles &times; 4 buttons
+        = <b>64 tasks</b> in total.
+      </p>
+      <p class="sb-note">
+        Pick a training set from the menu above. <b>Blue</b> cubes are tasks it was trained on,
+        <b>orange</b> ones it never saw; darker means a higher success rate. Drag to rotate,
+        scroll to zoom, hover a cube for its numbers.
+      </p>
+    </div>
+    <div class="sb-divider"></div>
+    <div>
+      <div class="sb-title">Headline</div>
+      <div class="stat-row" id="stats"></div>
+      <p class="sb-note" style="margin-top:6px;">
+        A <b>rollout</b> is one attempt at a task in the simulator, scored success or failure.
+        Each percentage pools every rollout across all tasks in that group and all random
+        seeds, so the counts below say how much evidence is behind it.
+      </p>
+    </div>
+    <div class="sb-divider"></div>
+    <div>
+      <div class="sb-title">Legend</div>
+      <div id="legend-box" style="display:flex;flex-direction:column;gap:6px;"></div>
+    </div>
+    <div class="sb-divider"></div>
+    <div>
+      <div class="sb-title">How much of the task was seen before</div>
+      <p class="sb-note" style="margin-bottom:5px;">
+        A held-out task still shares <em>pairs</em> of ingredients with training &mdash;
+        object+receptacle, object+button, receptacle+button. Grouped by how many of those
+        three pairs appeared in some training task.
+      </p>
+      <div id="pair-box"></div>
+    </div>
+    <div class="sb-divider"></div>
+    <div>
+      <div class="sb-title">Success by ingredient</div>
+      <p class="sb-note" style="margin-bottom:6px;">
+        Success rate over all tasks using each object, receptacle, or button &mdash; shows
+        whether one ingredient is harder than the rest.
+      </p>
+      <div class="sb-note" style="margin-bottom:3px;">Object</div>
+      <div id="factor-obj" class="factor-grid"></div>
+    </div>
+    <div>
+      <div class="sb-note" style="margin-bottom:3px;">Receptacle</div>
+      <div id="factor-rec" class="factor-grid"></div>
+    </div>
+    <div>
+      <div class="sb-note" style="margin-bottom:3px;">Button colour</div>
+      <div id="factor-col" class="factor-grid"></div>
+    </div>
+    <div class="sb-divider"></div>
+    <div>
+      <div class="sb-title">Axes</div>
+      <div class="axis-legend"><span class="axis-label">X</span> Object picked: cross, cube, cylinder, milk</div>
+      <div class="axis-legend"><span class="axis-label">Y</span> Placed in: bin, mug, plate, mug&nbsp;no&nbsp;handle</div>
+      <div class="axis-legend"><span class="axis-label">Z</span> Button pressed: red, green, blue, yellow</div>
+    </div>
+    <div class="sb-divider"></div>
+    <div>
+      <div class="sb-title">Layer Visibility</div>
+      <div class="layer-section" id="layers"></div>
+      <button disabled class="show-all-btn" style="margin-top:6px;">Show All</button>
+    </div>
+  </div>
+</div>
+
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script defer src="../assets/js/results.js"></script>
+</body>
+</html>

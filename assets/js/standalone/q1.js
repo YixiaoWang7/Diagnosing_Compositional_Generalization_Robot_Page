@@ -1,0 +1,306 @@
+// ─── Data ───────────────────────────────────────────────────────────────────
+const dataL5 = {
+  bValues: [4, 6, 7, 8, 10, 12, 16, 20, 24, 64],
+  id:  { mean: [83.3333,84.6296,83.3333,83.6111,84.3333,80.6481,81.8750,81.6667,81.3426,78.6458],
+         sem:  [5.8333,3.0316,2.1473,1.7067,2.4037,1.2143,1.7347,1.4175,2.8252,1.3985] },
+  ood: { mean: [0.3889,6.2261,25.4191,32.4206,51.2346,64.3803,73.7731,75.9848,76.1944,78.6458],
+         sem:  [0.2422,0.5187,5.1743,1.0197,12.4504,6.7294,2.8656,3.0795,1.3345,1.3985] },
+};
+
+const dataL4 = {
+  bValues: [4, 5, 6, 7, 8, 10, 16],
+  id:  { mean: [82.0000,77.8667,76.4444,71.9365,73.4444,74.3556,73.5000],
+         sem:  [0,2.1554,2.4977,0.9979,1.4699,3.1273,3.9870] },
+  ood: { mean: [3.6700,7.7980,31.1556,58.8148,66.7778,69.1111,73.5000],
+         sem:  [0,2.3445,4.5525,4.3268,2.6428,1.7261,3.9870] },
+};
+
+const lerp = (a, b, t) => a + (b - a) * t;
+
+// ─── Canvas Drawing ─────────────────────────────────────────────────────────
+function setupChart(canvasId, data) {
+  const canvas = document.getElementById(canvasId);
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  const W = rect.width, H = rect.height;
+
+  // right fits the trailing "NN.N%" value label drawn 8px past the frontier point
+  const pad = { top: 20, right: 52, bottom: 45, left: 55 };
+  const plotW = W - pad.left - pad.right;
+  const plotH = H - pad.top - pad.bottom;
+
+  const B = data.bValues;
+  const N = B.length;
+  const maxB = B[N - 1];
+  // Animation "stops": start at the first data point's B, then pass through the rest.
+  const stops = [...B];
+  const segCount = stops.length - 1;
+  const yMin = 0, yMax = 100;
+
+  // Map global progress g∈[0,1] to a continuous x frontier for this chart.
+  function curXAt(g) {
+    const localP = Math.max(0, Math.min(g, 1)) * segCount;
+    const seg = Math.min(Math.floor(localP), segCount - 1);
+    const frac = localP - seg;
+    return lerp(stops[seg], stops[seg + 1], frac);
+  }
+
+  // Interpolate a series' value along the data polyline at arbitrary x.
+  function valueAt(series, x) {
+    if (x <= B[0]) return { mean: series.mean[0], sem: series.sem[0] };
+    if (x >= maxB) return { mean: series.mean[N - 1], sem: series.sem[N - 1] };
+    for (let i = 0; i < N - 1; i++) {
+      if (x >= B[i] && x <= B[i + 1]) {
+        const t = (x - B[i]) / (B[i + 1] - B[i]);
+        return { mean: lerp(series.mean[i], series.mean[i + 1], t),
+                 sem: lerp(series.sem[i], series.sem[i + 1], t) };
+      }
+    }
+    return { mean: series.mean[N - 1], sem: series.sem[N - 1] };
+  }
+
+  function draw(curX) {
+    const xMin = B[0];
+    const axisMax = Math.max(curX, xMin);
+    const xSpan = Math.max(axisMax - xMin, 1e-6);
+    const xToPixel = (x) => pad.left + ((x - xMin) / xSpan) * plotW;
+    const yToPixel = (y) => pad.top + plotH - ((y - yMin) / (yMax - yMin)) * plotH;
+
+    ctx.clearRect(0, 0, W, H);
+
+    // Horizontal grid (y axis full 0–100 from the start)
+    ctx.strokeStyle = '#e8e8e8';
+    ctx.lineWidth = 0.8;
+    for (let y = 0; y <= 100; y += 20) {
+      ctx.beginPath();
+      ctx.moveTo(pad.left, yToPixel(y));
+      ctx.lineTo(W - pad.right, yToPixel(y));
+      ctx.stroke();
+    }
+
+    // Axes
+    ctx.strokeStyle = '#2b2b2b';
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.moveTo(pad.left, pad.top);
+    ctx.lineTo(pad.left, pad.top + plotH);
+    ctx.lineTo(W - pad.right, pad.top + plotH);
+    ctx.stroke();
+
+    // Y labels
+    ctx.fillStyle = '#444';
+    ctx.font = '11px system-ui';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    for (let y = 0; y <= 100; y += 20) {
+      ctx.fillText(y + '%', pad.left - 8, yToPixel(y));
+    }
+
+    // X labels: 0 plus each revealed B value, skipping ones that would overlap.
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.fillStyle = '#444';
+    let lastLabelX = -Infinity;
+    const drawXLabel = (val) => {
+      const px = xToPixel(val);
+      if (px - lastLabelX < 24) return;
+      lastLabelX = px;
+      ctx.fillText(val, px, pad.top + plotH + 8);
+      ctx.strokeStyle = '#2b2b2b';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(px, pad.top + plotH);
+      ctx.lineTo(px, pad.top + plotH + 4);
+      ctx.stroke();
+    };
+    for (let i = 0; i < N; i++) {
+      if (B[i] <= curX + 1e-6) drawXLabel(B[i]);
+    }
+
+    // Axis titles
+    ctx.fillStyle = '#1a1a1a';
+    ctx.font = '12px system-ui';
+    ctx.textAlign = 'center';
+    ctx.fillText('B (number of training tasks)', pad.left + plotW / 2, H - 5);
+    ctx.save();
+    ctx.translate(14, pad.top + plotH / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.fillText('Success rate (%)', 0, 0);
+    ctx.restore();
+
+    if (curX < B[0]) return; // nothing to draw yet, axis is still growing
+
+    // Build the revealed polyline points (real data points + moving frontier).
+    function buildPoints(series) {
+      const pts = [];
+      for (let i = 0; i < N; i++) {
+        if (B[i] <= curX + 1e-6) {
+          pts.push({ x: B[i], mean: series.mean[i], sem: series.sem[i], real: true });
+        }
+      }
+      if (curX < maxB) {
+        const v = valueAt(series, curX);
+        pts.push({ x: curX, mean: v.mean, sem: v.sem, real: false });
+      }
+      return pts;
+    }
+
+    function drawCurve(series, color, fillColor) {
+      const pts = buildPoints(series);
+      if (pts.length === 0) return;
+
+      // SEM band
+      ctx.beginPath();
+      pts.forEach((p, i) => {
+        const px = xToPixel(p.x);
+        const py = yToPixel(Math.min(100, p.mean + p.sem));
+        if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+      });
+      for (let i = pts.length - 1; i >= 0; i--) {
+        const px = xToPixel(pts[i].x);
+        const py = yToPixel(Math.max(0, pts[i].mean - pts[i].sem));
+        ctx.lineTo(px, py);
+      }
+      ctx.closePath();
+      ctx.fillStyle = fillColor;
+      ctx.fill();
+
+      // Line
+      ctx.beginPath();
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2.5;
+      ctx.lineJoin = 'round';
+      ctx.lineCap = 'round';
+      pts.forEach((p, i) => {
+        const px = xToPixel(p.x);
+        const py = yToPixel(p.mean);
+        if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+      });
+      ctx.stroke();
+
+      // Markers at real data points only
+      pts.forEach((p) => {
+        if (!p.real) return;
+        const px = xToPixel(p.x), py = yToPixel(p.mean);
+        ctx.beginPath();
+        ctx.arc(px, py, 4.5, 0, Math.PI * 2);
+        ctx.fillStyle = color;
+        ctx.fill();
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+      });
+
+      return pts[pts.length - 1];
+    }
+
+    const idTip = drawCurve(data.id, '#2E7D32', 'rgba(46,125,50,0.12)');
+    const oodTip = drawCurve(data.ood, '#C5582D', 'rgba(197,88,45,0.12)');
+
+    // Frontier value annotations
+    ctx.font = 'bold 11px system-ui';
+    ctx.textAlign = 'left';
+    if (idTip) {
+      ctx.fillStyle = '#2E7D32';
+      ctx.fillText(idTip.mean.toFixed(1) + '%', xToPixel(idTip.x) + 8, yToPixel(idTip.mean) - 2);
+    }
+    if (oodTip) {
+      ctx.fillStyle = '#C5582D';
+      ctx.fillText(oodTip.mean.toFixed(1) + '%', xToPixel(oodTip.x) + 8, yToPixel(oodTip.mean) + 12);
+    }
+  }
+
+  return { draw, curXAt, maxB };
+}
+
+// ─── Init & render ──────────────────────────────────────────────────────────
+let chartL5, chartL4;
+const slider = document.getElementById('bSlider');
+
+function render(g) {
+  const xL5 = chartL5.curXAt(g);
+  const xL4 = chartL4.curXAt(g);
+  chartL5.draw(xL5);
+  chartL4.draw(xL4);
+  const disp = document.getElementById('bDisplay');
+  disp.textContent = `L5 B≈${Math.round(xL5)} · L4 B≈${Math.round(xL4)}`;
+}
+
+function init() {
+  chartL5 = setupChart('chartL5', dataL5);
+  chartL4 = setupChart('chartL4', dataL4);
+}
+
+init();
+render(0);
+
+const DURATION = 7000;
+let animating = false;
+let played = false;
+let rafId = null;
+let startTime = null;
+const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const embedded = window.parent !== window;
+if (embedded) {
+  document.documentElement.style.overflow = 'hidden';
+  document.body.style.overflow = 'hidden';
+}
+
+function frame(ts) {
+  if (startTime === null) startTime = ts;
+  let g = (ts - startTime) / DURATION;
+  if (g >= 1) g = 1;
+  slider.value = Math.round(g * 1000);
+  render(g);
+  if (g < 1 && animating) {
+    rafId = requestAnimationFrame(frame);
+  } else {
+    animating = false;
+  }
+}
+
+function stopAnim() {
+  animating = false;
+  if (rafId) cancelAnimationFrame(rafId);
+  rafId = null;
+  startTime = null;
+}
+
+function startAnim(forceComplete) {
+  if (played && !forceComplete) return;
+  played = true;
+  if (forceComplete || reduceMotion) {
+    stopAnim();
+    slider.value = 1000;
+    render(1);
+    return;
+  }
+  stopAnim();
+  animating = true;
+  startTime = null;
+  rafId = requestAnimationFrame(frame);
+}
+
+window.addEventListener('message', (event) => {
+  if (!event.data || event.data.type !== 'cg-play') return;
+  startAnim(!!event.data.reduceMotion);
+});
+
+if (!embedded) {
+  startAnim(false);
+}
+
+slider.addEventListener('input', () => {
+  stopAnim();
+  played = true;
+  render(parseInt(slider.value) / 1000);
+});
+
+window.addEventListener('resize', () => {
+  init();
+  render(parseInt(slider.value) / 1000);
+});
