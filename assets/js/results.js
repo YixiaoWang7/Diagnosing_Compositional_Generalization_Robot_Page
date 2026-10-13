@@ -1,19 +1,16 @@
 'use strict';
 
-// Load the viewer's dataset before initializing controls or WebGL.
-(async function () {
-  const viewport = document.getElementById('viewport');
+// Classic scripts also load from file://, unlike a fetch of the JSON export.
+(function () {
   const status = document.getElementById('viewer-status');
   const controls = document.querySelectorAll('#topbar button, #topbar select, .show-all-btn');
   try {
-    const response = await fetch(viewport.dataset.resultsSrc);
-    if (!response.ok) throw new Error('Results request failed: ' + response.status);
-    const data = await response.json();
-    initResults(data);
+    if (!window.THREE || !window.RESULTS_DATA) throw new Error('Missing viewer assets');
+    initResults(window.RESULTS_DATA);
     controls.forEach((control) => { control.disabled = false; });
     status.hidden = true;
   } catch (error) {
-    status.textContent = 'Results could not be loaded. Please reload the page.';
+    status.textContent = 'The 3D view could not start. Check that WebGL is available and reload the page.';
     status.setAttribute('role', 'alert');
     console.error(error);
   }

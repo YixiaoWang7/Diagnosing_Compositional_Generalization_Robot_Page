@@ -20,96 +20,88 @@
     <p class="affils">
       <span>University of California, Berkeley</span>
     </p>
+    <p class="venue"><span class="venue-badge">CoRL 2026 &middot; Spotlight</span></p>
     <div class="links">
-      <a href="corl_2026_cg.pdf" target="_blank">Paper (PDF)</a>
-      <a href="https://github.com/YixiaoWang7/Diagnosing_Compositional_Generalization_Robot" target="_blank">Code</a>
-      <a href="#">Dataset</a>
-      <a href="#">Supplementary</a>
+      <a href="https://arxiv.org/abs/2607.29687" target="_blank" rel="noopener">Paper (arXiv)</a>
+      <a href="corl_2026_cg.pdf" target="_blank">PDF</a>
+      <a href="https://github.com/YixiaoWang7/Diagnosing_Compositional_Generalization_Robot" target="_blank" rel="noopener">Code</a>
+      <a href="#resources">Datasets</a>
     </div>
   </div>
 </header>
 
-<!-- TL;DR -->
-<section class="container">
-  <h2>TL;DR</h2>
-  <p>Full tuple coverage is unnecessary &mdash; a structured sparse subset recovers strong OOD
-  performance, and one demo per instruction closes most of what remains. What decides <em>which</em>
-  sparse subset works is our third result: when one step constrains another, coverage must be spread
-  across those <em>dependencies</em>. At a fixed budget, spreading the same 16 tasks over more
-  dependency cases more than triples held-out success &mdash; so the design rule is not
-  <em>how much</em> data to collect, but <em>along which axis</em> to spread it.</p>
+<nav class="section-nav" aria-label="Page sections">
+  <div class="container nav-links">
+    <a href="#overview" aria-current="location">Overview</a>
+    <a href="#framework">Framework</a>
+    <a href="#q1">Q1 &middot; Coverage</a>
+    <a href="#q2">Q2 &middot; Finetuning</a>
+    <a href="#q3">Q3 &middot; Dependencies</a>
+    <a href="#further-findings">Further Findings</a>
+    <a href="#resources">Code &amp; Data</a>
+    <a href="#citation">Citation</a>
+  </div>
+</nav>
+
+<main>
+<!-- Overview -->
+<section class="container page-section" id="overview" aria-labelledby="overview-title">
+  <h2 class="section-heading" id="overview-title"><span class="section-number" aria-hidden="true">01</span> Overview</h2>
+  <p>Robots do not need demonstrations of every instruction combination. A structured quarter of
+  the task space generalizes to the rest, and when one step constrains another, coverage must span
+  those <em>dependencies</em>.</p>
   <div class="tldr-strip">
     <div class="stat-card">
       <div class="number">1/4 &rarr; 78.2%</div>
-      <div class="label">a quarter of the task space<br>recovers full OOD success</div>
+      <div class="label">held-out success using<br>a quarter of the task space</div>
     </div>
     <div class="stat-card">
       <div class="number">0.4% &rarr; 54.7%</div>
-      <div class="label">OOD success after<br>1-demo-per-instruction finetune</div>
+      <div class="label">success on pretraining-held-out tasks<br>after 1 demo per instruction</div>
     </div>
     <div class="stat-card">
       <div class="number amber">3.4&times;</div>
       <div class="label">held-out success from spreading<br>a fixed budget across dependencies</div>
     </div>
   </div>
-</section>
-
-<!-- Abstract -->
-<section class="container">
-  <h2>Abstract</h2>
+  <h3 class="abstract-heading">Abstract</h3>
   <div class="abstract-panel">
     Sequential robot manipulation requires policies to execute novel combinations of familiar instruction components. However, collecting demonstrations for all possible instruction tuples is combinatorially expensive, while sparsely covered datasets often fail under out-of-distribution recombination. This paper studies compositional generalization through the lens of instruction-space coverage. We decompose the generalization gap into three sources: marginal instruction shift, instruction-compositional shift, and context&ndash;action shift. Our results show that exhaustive tuple enumeration is unnecessary: a structured subset, as small as one quarter of the full task space, can recover strong out-of-distribution performance when it covers action-relevant dependencies.
   </div>
 </section>
 
 <!-- Analysis / Theory -->
-<section class="container">
-  <h2>Where the Generalization Gap Comes From</h2>
-  <p>We bound the compositional generalization gap by three terms, each with a different interpretation and controllability.</p>
+<section class="container page-section" id="framework" aria-labelledby="framework-title">
+  <h2 class="section-heading" id="framework-title"><span class="section-number" aria-hidden="true">02</span> Generalization Framework</h2>
+  <p>Where does the generalization gap come from? Our analysis separates three sources of distribution shift.</p>
 
   <h3>1. Marginal Instruction Shift</h3>
-  <p>Whether individual subtask instructions are covered by training. This is a data issue resolvable only by expanding training support.</p>
+  <p>Whether individual instruction values have similar coverage and frequency in training and test data.</p>
 
   <h3>2. Instruction-Compositional Shift</h3>
-  <p>Whether familiar subtasks are recombined in unfamiliar ways at test time. Pairwise coverage in the training set controls this term.</p>
+  <p>Whether familiar subtasks are recombined in unfamiliar ways at test time.</p>
 
   <h3>3. Context&ndash;Action Shift</h3>
-  <p>The residual shift in context&ndash;action behavior when the policy is overly sensitive to irrelevant instruction correlations.</p>
+  <p>How observation&ndash;action distributions differ even after conditioning on the full instruction sequence.</p>
 </section>
 
 <!-- Experiments -->
-<section class="container">
-  <h2>Experiments</h2>
+<section class="container page-section" id="experiments" aria-labelledby="experiments-title">
+  <h2 class="section-heading" id="experiments-title"><span class="section-number" aria-hidden="true">03</span> Experiments</h2>
 
   <!-- ── Q1 ───────────────────────────────────────────────────────────────── -->
-  <div class="exp" id="q1">
-    <h3>Q1: Does the robot need to be trained on every task?</h3>
-
-    <p>In <strong>Pick-Place-Press</strong>, one instruction means: <strong>pick</strong> one of
-    4 objects, <strong>place</strong> it in one of 4 receptacles, <strong>press</strong> one of
-    4 buttons. That is 4&nbsp;&times;&nbsp;4&nbsp;&times;&nbsp;4 =
-    <strong>64 possible instructions</strong>.</p>
-
-    <p>We train on <strong>B</strong> of them and test on all 64. The other
-    64&nbsp;&minus;&nbsp;B are <em>held out</em>: the same skills, in a combination never shown.
-    Held-out success climbs steeply with B, then plateaus at <strong>B&nbsp;=&nbsp;16</strong>
-    &mdash; a quarter of the set is enough.</p>
-
-    <p>And <em>which</em> 16 matters. The <strong>orthogonal 16</strong> on the left covers every
-    pair of ingredients exactly once, and reaches that plateau by itself.</p>
-
-    <p class="fig-caption">Left: how the orthogonal 16 is built. Right: success vs. B for
-    training sets drawn <strong>at random</strong> from the 64 &middot; <a href="q1/index.html" target="_blank" style="color:var(--accent);text-decoration:none;border-bottom:1px dashed var(--accent)">open standalone &nearr;</a></p>
+  <div class="exp" id="q1" role="region" aria-labelledby="q1-title">
+    <h3 class="experiment-heading" id="q1-title"><span class="question-label">Q1</span> Sparse Task Coverage</h3>
+    <p class="experiment-question">Does the robot need to be trained on every task?</p>
+    <p>Pick&ndash;Place&ndash;Press has 4 objects &times; 4 receptacles &times; 4 buttons =
+    <strong>64 tasks</strong>. We train on <strong>B</strong> of them and test on the held-out rest.</p>
+    <p class="fig-caption">Pick&ndash;Place&ndash;Press &middot; 64 tasks &middot; <a href="q1/index.html" target="_blank" style="color:var(--accent);text-decoration:none;border-bottom:1px dashed var(--accent)">open standalone &nearr;</a></p>
 
     <div class="charts-container">
-      <!-- Orthogonal structure — a design diagram, not measured data. Its 16 rows are the
-           actual Orthogonal-16 training set (button = object XOR receptacle). -->
+      <!-- Its 16 rows are the actual Orthogonal-16 training set (button = object XOR receptacle). -->
       <div class="chart-panel" id="orthoPanel">
         <h4>The orthogonal 16</h4>
-        <p class="chart-desc">
-          One row per instruction. Every value appears 4 times down a column, and every pairing
-          across any two columns appears exactly once &mdash; nothing repeated, nothing missing.
-        </p>
+        <p class="chart-desc">Every pair of factor values appears exactly once.</p>
         <div class="ortho-grid" id="orthoGrid"></div>
         <div class="ortho-key">
           <span><i class="ok-o"></i> object</span>
@@ -124,93 +116,65 @@
       </div>
     </div>
 
-    <p class="takeaway"><strong>Takeaway:</strong> Full coverage is unnecessary &mdash; and a
-    well-chosen quarter of it is worth far more than a random quarter.</p>
-
-    <p class="footnote">A <strong>rollout</strong> is one simulated attempt, scored success or
-    failure. Each point pools all rollouts over 3 training seeds &times; 3 random draws of the
-    B training instructions; the band is &plusmn;1 standard error across those draws (B=4 is a
-    single fixed set, so it has no band). The star is the orthogonal 16 over 3 seeds. The grid
-    is a design diagram, not measured data.</p>
+    <p class="takeaway"><strong>Takeaway:</strong> A structured quarter of the task space reaches
+    78.2% held-out success, matching full training (78.6%).</p>
 
     <!-- ── Every-task view: the same experiments, one cube per task ────────── -->
     <div class="viewer-header">
       <h4 style="margin:0">Every task, one at a time</h4>
       <a href="results/index.html" target="_blank">Open full screen &nearr;</a>
     </div>
-    <p class="section-lead">
-      The curves average over instructions; this view breaks that average open. Each small cube
-      is one of the 64, placed by its object, receptacle and button. Pick a training set, then
-      rotate and hover to see how each one did.
-    </p>
+    <p class="section-lead">Each cube is one of the 64 tasks. Pick a training set and hover to see per-task success.</p>
     <div class="viewer-frame">
       <iframe src="results/index.html" title="Pick-Place-Press: all 64 tasks" loading="lazy"></iframe>
     </div>
   </div>
 
   <!-- ── Q2 ───────────────────────────────────────────────────────────────── -->
-  <div class="exp" id="q2">
-    <h3>Q2: What Is Missing When Sparse Coverage Fails?</h3>
-    <p>Diagonal pretraining learns reusable subtask skills but not instruction steering. Finetuning with only one demonstration per task improves OOD success from 0.4% to 54.7%.</p>
-    <p class="fig-caption">OOD = tasks never seen during pretraining &middot; +1 demo/instruction = one demonstration for each of the 64 task instructions &middot; <a href="q2/index.html" target="_blank" style="color:var(--accent);text-decoration:none;border-bottom:1px dashed var(--accent)">open standalone &nearr;</a></p>
+  <div class="exp" id="q2" role="region" aria-labelledby="q2-title">
+    <h3 class="experiment-heading" id="q2-title"><span class="question-label">Q2</span> Instruction Finetuning</h3>
+    <p class="experiment-question">What is missing when sparse coverage fails?</p>
+    <p>We pretrain on <strong>B</strong> tasks, then finetune with <strong>one demonstration per
+    instruction</strong>, and test on the tasks held out from pretraining.</p>
+    <p class="fig-caption">Pick&ndash;Place&ndash;Press &middot; 64 tasks &middot; <a href="q2/index.html" target="_blank" style="color:var(--accent);text-decoration:none;border-bottom:1px dashed var(--accent)">open standalone &nearr;</a></p>
 
     <div class="legend">
-      <div class="legend-item"><div class="legend-swatch" style="background:var(--series-before)"></div> Pretrained only (OOD)</div>
-      <div class="legend-item"><div class="legend-swatch" style="background:var(--series-blue)"></div> + 1 demo / instruction (OOD)</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:var(--series-before)"></div> Pretrained only</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:var(--series-blue)"></div> + 1 demo / instruction</div>
     </div>
 
     <div class="chart-container">
-      <h4>OOD Success: Before vs. After 1-Demo Finetuning</h4>
-      <p class="chart-desc">L5 Pick &amp; Place (64 tasks) &mdash; pretrained on B sparse diagonal tasks, then finetuned with 1 demo per instruction</p>
+      <h4>OOD success before and after finetuning</h4>
       <canvas id="chart"></canvas>
     </div>
 
-    <p class="takeaway"><strong>Takeaway:</strong> Even with as few as 4 pretraining tasks, one demonstration per instruction is enough to jump from near-zero to &gt;50% OOD success &mdash; the skills were already there.</p>
-    <p class="footnote">* B=8 baseline uses a single-seed evaluation (no 3-seed pooled baseline available for that checkpoint).</p>
+    <p class="takeaway"><strong>Takeaway:</strong> Sparse pretraining already learns the skills;
+    one demonstration per instruction steers them to new combinations (0.4% &rarr; 54.7%).</p>
   </div>
 
   <!-- ── Q3 ───────────────────────────────────────────────────────────────── -->
-  <div class="exp" id="q3">
-    <h3>Q3: What Coverage Is Needed for Dependent Instructions?</h3>
-    <p>Now the two halves of the instruction depend on each other: the robot is told where the <em>second</em> object goes, and must infer where the <em>first</em> one goes.</p>
-    <p class="fig-caption">Dependent Two-Stage Pick-and-Place &middot; 48-task space &middot; <strong>every condition trained on B = 16 tasks</strong> &middot; <a href="q3/index.html" target="_blank" style="color:var(--accent);text-decoration:none;border-bottom:1px dashed var(--accent)">open standalone &nearr;</a></p>
+  <div class="exp" id="q3" role="region" aria-labelledby="q3-title">
+    <h3 class="experiment-heading" id="q3-title"><span class="question-label">Q3</span> Dependent Instructions</h3>
+    <p class="experiment-question">Which combinations must training cover when one step constrains another?</p>
+    <p>The robot is told where the <em>second</em> object goes (<strong>c<sub>2</sub></strong>); the
+    first object may go anywhere else (<strong>c<sub>1</sub> &ne; c<sub>2</sub></strong>).</p>
+    <p class="fig-caption">Dependent two-stage Pick-and-Place &middot; 48 tasks &middot; <a href="q3/index.html" target="_blank" style="color:var(--accent);text-decoration:none;border-bottom:1px dashed var(--accent)">open standalone &nearr;</a></p>
 
     <!-- The task -->
     <div class="card">
-      <h4>The task</h4>
-      <p class="lead">
-        <em>&ldquo;Put the cube away, then put the milk on the plate.&rdquo;</em> Where the cube goes
-        is never stated &mdash; but the plate is reserved for the milk, so the cube may go anywhere
-        <strong>except the plate</strong>.
-      </p>
-
+      <h4>The task: <em>&ldquo;Put the cube away, then put the milk on the plate.&rdquo;</em></h4>
       <figure class="task-figure">
         <img src="assets/images/fig_2spp_captioned.png"
              alt="Three frames of a robot arm. Step 1: pick up the cube — blue arrows point to the purple cup, red cup and box as valid destinations, a red arrow to the plate is crossed out. Step 2: pick up the milk. Step 3: place the milk to the plate. A red arrow loops back to step 1, captioned 'Cannot put the cube into plate!', showing that the stage-2 target constrains stage 1."
              loading="lazy">
       </figure>
-
-      <div class="task-caption">
-        <strong>Why &ldquo;dependent&rdquo;:</strong> the instruction names the milk's container
-        (<strong>c<sub>2</sub></strong>) but never the cube's (<strong>c<sub>1</sub></strong>). Only
-        <strong>c<sub>1</sub> &ne; c<sub>2</sub></strong> pins it down &mdash; move the milk and the
-        cube's valid destinations move with it. So training must cover
-        <em>(object, c<sub>2</sub>) combinations</em>, not objects and containers separately.
-      </div>
     </div>
 
-    <!-- Coverage + result, side by side: the selector and the curve it drives must be
-         visible at the same time, otherwise clicking a condition scrolls its effect away. -->
+    <!-- Coverage + result, side by side: the selector and the curve it drives stay visible together. -->
     <div class="card" id="q3Result">
-      <h4>What training saw, and what it cost on held-out tasks</h4>
-      <p class="lead">
-        A task is an (o<sub>1</sub>, o<sub>2</sub>, c<sub>2</sub>) triple: 4 &times; 3 &times; 4 =
-        <strong>48 tasks</strong>, spanning 16 (o<sub>1</sub>, c<sub>2</sub>) combinations. Every
-        combination in training demonstrates <strong>all 3</strong> legal c<sub>1</sub> &mdash; the
-        rule is always fully shown. Crucially, all four conditions train on the
-        <strong>same budget of 16 tasks</strong> &mdash; what changes is only how widely those 16 are
-        <em>spread</em> over combinations, from 6 up to all 16. Coverage, not data volume.
-      </p>
+      <h4>Same 16 training tasks, spread over more (o<sub>1</sub>, c<sub>2</sub>) combinations</h4>
+      <p class="lead">Every condition trains on <strong>B = 16</strong> tasks; only the number of
+      covered (o<sub>1</sub>, c<sub>2</sub>) combinations changes.</p>
 
       <div class="controls" aria-label="Coverage selector">
         <label>Combinations covered by the same 16 tasks</label>
@@ -221,7 +185,6 @@
       </div>
 
       <div class="q3-split">
-        <!-- Left: the space and what training covered -->
         <div class="q3-left">
           <div class="board-xtitle">c<sub>2</sub> &mdash; reserved for the second object</div>
           <div class="board" id="board" aria-label="A 4 by 4 grid of first-object by reserved-container combinations. Each cell holds one slot per candidate container for the first object; the slot equal to the reserved container is forbidden."></div>
@@ -239,7 +202,7 @@
             </div>
             <div class="counter">
               <div class="cnum" id="cntC1">48</div>
-              <div class="clab">c<sub>1</sub> demonstrations</div>
+              <div class="clab">legal first-placement cases covered</div>
             </div>
             <div class="counter">
               <div class="cnum fixed">B = 16</div>
@@ -247,7 +210,6 @@
             </div>
           </div>
 
-          <!-- The rule, drawn once at legible size for whichever cell is selected. -->
           <div class="expansion">
             <p class="exp-instr" id="expInstr"></p>
             <div class="cslots" id="cslots"></div>
@@ -255,9 +217,8 @@
           </div>
         </div>
 
-        <!-- Right: what it cost -->
         <div class="q3-right">
-          <div class="board-xtitle">measured on the 32 held-out tasks</div>
+          <div class="board-xtitle">held-out tasks</div>
           <div class="chart-wrap">
             <canvas id="chartCombined"></canvas>
             <div class="legend">
@@ -265,46 +226,104 @@
               <div class="legend-item"><span class="swatch" style="background:var(--series-id);opacity:.28"></span> &plusmn; SE</div>
             </div>
           </div>
-          <p class="q3-takeaway">
-            At a fixed 16 training tasks, spreading them wider lifts held-out success
-            <strong>9.2% &rarr; 31.4%</strong> &mdash; no extra data, just better coverage. Seeing the
-            rule in full is not enough; it has to be seen across combinations.
-          </p>
         </div>
       </div>
-
-      <p class="illus-note">
-        The board's counts and forbidden slots are exact. <em>Which</em> cells a condition covers is
-        illustrative &mdash; the logs record how many, not which.
-      </p>
     </div>
 
-    <p class="footnote">
-      48-task Dependent 2S-PP (l4_2s_no_cont0, 48-task set). Mean &plusmn; SE across 5 training
-      seeds, on the 32 held-out tasks. Cov6/9/12 are the B16 runs and Cov16 is the orthogonal
-      16-task design, so the training budget is 16 tasks in all four conditions &mdash;
-      only coverage differs. Training on all 48 tasks is not shown: that run has no held-out split
-      to measure.
-    </p>
+    <p class="takeaway"><strong>Takeaway:</strong> At a fixed budget of 16 tasks, covering more
+    dependent combinations raises held-out success from 9.2% to 31.4%.</p>
   </div>
+</section>
+
+<!-- Further findings: comparison with stage-wise modular policies (paper Sec. 4.1, Sec. 5.4, Fig. 9). -->
+<section class="container page-section" id="further-findings" aria-labelledby="findings-title">
+  <h2 class="section-heading" id="findings-title"><span class="section-number" aria-hidden="true">04</span> Further Findings</h2>
+  <h3 class="findings-subheading">Stage-wise modular policy vs. full-instruction policy</h3>
+  <div class="policy-defs">
+    <p class="policy-def modular"><span class="policy-def-name">Stage-wise modular</span>
+      <span class="policy-def-eq"><i>&pi;</i>(<i>a</i> | <i>z</i>, <i>l</i><sub><i>&sigma;</i>(<i>z</i>)</sub>)</span>
+      <span>A ground-truth stage indicator passes <strong>only the active instruction</strong>.</span></p>
+    <p class="policy-def full"><span class="policy-def-name">Full instruction</span>
+      <span class="policy-def-eq"><i>&pi;</i>(<i>a</i> | <i>z</i>, <i>l</i>)</span>
+      <span>The policy sees <strong>every instruction</strong> at every stage.</span></p>
+  </div>
+
+  <figure class="modular-figure">
+    <div class="modular-panels">
+      <div class="modular-panel">
+        <h4>(a) Independent instructions: the active instruction is enough</h4>
+        <p class="chart-desc">Pick&ndash;Place&ndash;Press &middot; OOD success rate (%)</p>
+        <canvas id="chartModularPPP" role="img" aria-label="OOD success rate versus B. Stage-wise modular: 72.3, 81.0, 83.3, and 77.7 percent at B equal to 4, 8, 16, and 24. Full instruction with random tasks: 0.4, 32.4, 73.8, and 76.2 percent. Full instruction with the orthogonal 16 tasks: 78.2 percent."></canvas>
+      </div>
+      <div class="modular-panel">
+        <h4>(b) Dependent instructions: the hidden constraint is lost</h4>
+        <p class="chart-desc">Two-stage Pick-and-Place &middot; wrong first container (%), lower is better</p>
+        <canvas id="chartModular2S" role="img" aria-label="Wrong-container rate. Stage-wise modular: 24.1 percent on Cov16 ID, 24.5 percent on Cov16 OOD, and 24.4 percent on Full ID. Full instruction: 10.1, 13.7, and 12.0 percent."></canvas>
+      </div>
+    </div>
+    <figcaption>In (b), the first placement must avoid the later container <i>c</i><sub>2</sub>, which is not
+    part of the active instruction. Cov16 covers all 16 dependent pairs; Full trains on all 48 tasks.
+    Error bars follow Figure 9 of the paper.</figcaption>
+  </figure>
+  <p class="takeaway"><strong>Takeaway:</strong> Stage-wise modularity helps when instructions are
+  independent, but cannot learn a dependency on an instruction it does not see.</p>
+</section>
+
+<!-- Code and data -->
+<section class="container page-section" id="resources" aria-labelledby="resources-title">
+  <h2 class="section-heading" id="resources-title"><span class="section-number" aria-hidden="true">05</span> Code &amp; Data</h2>
+  <p class="section-lead">The training code, simulator, and demonstration datasets for all three
+  task families are public. Setup, data preparation, and train/evaluate commands are in the code
+  repository README.</p>
+  <div class="resource-grid">
+    <a class="resource-card" href="https://github.com/YixiaoWang7/Diagnosing_Compositional_Generalization_Robot" target="_blank" rel="noopener">
+      <span class="resource-kind">Code</span>
+      <strong>Diagnosing_Compositional_Generalization_Robot</strong>
+      <span>RoboPolicy learning library plus the paper's data preparation, training, and evaluation tools.</span>
+    </a>
+    <a class="resource-card" href="https://github.com/YixiaoWang7/robot_envs" target="_blank" rel="noopener">
+      <span class="resource-kind">Simulator</span>
+      <strong>robot_envs</strong>
+      <span>MuJoCo environments for Pick-and-Place, Pick&ndash;Place&ndash;Press, and the dependent two-stage task.</span>
+    </a>
+    <a class="resource-card" href="https://huggingface.co/datasets/yixiiiiii/cg_l4_1s" target="_blank" rel="noopener">
+      <span class="resource-kind">Dataset</span>
+      <strong>cg_l4_1s</strong>
+      <span>Pick-and-Place (PP) demonstrations: 4 objects &times; 4 receptacles.</span>
+    </a>
+    <a class="resource-card" href="https://huggingface.co/datasets/yixiiiiii/cg_l5" target="_blank" rel="noopener">
+      <span class="resource-kind">Dataset</span>
+      <strong>cg_l5</strong>
+      <span>Pick&ndash;Place&ndash;Press (PPP) demonstrations: 64 object&ndash;receptacle&ndash;button instructions.</span>
+    </a>
+    <a class="resource-card" href="https://huggingface.co/datasets/yixiiiiii/cg_l4_2s" target="_blank" rel="noopener">
+      <span class="resource-kind">Dataset</span>
+      <strong>cg_l4_2s</strong>
+      <span>Dependent two-stage Pick-and-Place (2S-PP) demonstrations; both two-stage variants use this dataset.</span>
+    </a>
+  </div>
+  <p class="resource-note">Datasets are hosted on Hugging Face. Pretrained checkpoint downloads are not yet available.</p>
 </section>
 
 <!-- Citation -->
-<section class="container">
-  <h2>Citation</h2>
-  <p class="section-lead">Venue and full bibliographic details to be announced &mdash; the entry
-  below will be updated once the paper appears.</p>
+<section class="container page-section" id="citation" aria-labelledby="citation-title">
+  <h2 class="section-heading" id="citation-title"><span class="section-number" aria-hidden="true">06</span> Citation</h2>
+  <p class="section-lead">Accepted to the Conference on Robot Learning (CoRL) 2026 as a spotlight
+  presentation. Preprint: <a href="https://arxiv.org/abs/2607.29687" target="_blank" rel="noopener">arXiv:2607.29687</a>.</p>
   <div class="bibtex-block">
     <button class="copy-btn" type="button">Copy</button>
-    <pre>@misc{wang2026compositional,
-  title  = {Diagnosing Compositional Generalization in Sequential Robot Tasks},
-  author = {Wang, Yixiao and Wu, Cheng-En and Sun, Lingfeng and Wang, Pengcheng
-            and Ji, Xiang and Liang, Boyuan and Zhan, Guojian and Tomizuka, Masayoshi},
-  year   = {2026},
-  note   = {Preprint. Venue to be announced}
+    <pre>@inproceedings{wang2026diagnosing,
+  title={Diagnosing Compositional Generalization in Sequential Robot Tasks},
+  author={Yixiao Wang and Cheng-En Wu and Lingfeng Sun and Pengcheng Wang and
+          Xiang Ji and Boyuan Liang and Guojian Zhan and Masayoshi Tomizuka},
+  booktitle={Conference on Robot Learning (CoRL)},
+  year={2026},
+  note={Spotlight presentation},
+  url={https://arxiv.org/abs/2607.29687}
 }</pre>
   </div>
 </section>
+</main>
 
 <!-- Footer -->
 <footer>
@@ -327,6 +346,9 @@
 
 <!-- ─── Q3: dependent-pair coverage in 2S-PP ────────────────────────────────── -->
 <script defer src="assets/js/home/q3.js"></script>
+
+<!-- ─── Further findings: stage-wise modular vs. full-instruction comparison ────── -->
+<script defer src="assets/js/home/findings.js"></script>
 
 <!-- ─── Play each figure once, when it scrolls into view ─────────────────────── -->
 <script defer src="assets/js/home/init.js"></script>

@@ -9,6 +9,8 @@ import shutil
 import subprocess
 from urllib.parse import unquote, urlsplit
 
+from export_viewer_data import viewer_script
+
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -98,10 +100,13 @@ def main() -> None:
     if dataset.exists():
         try:
             check_viewer(dataset)
+            bundle = ROOT / "results/data.js"
+            if not bundle.exists() or bundle.read_text() != viewer_script():
+                errors.append("results/data.js: regenerate with python3 scripts/export_viewer_data.py")
         except (AssertionError, KeyError, TypeError, ValueError) as error:
             errors.append(f"results/data.json: {error}")
 
-    scripts = sorted((ROOT / "assets/js").rglob("*.js"))
+    scripts = sorted((ROOT / "assets/js").rglob("*.js")) + sorted((ROOT / "results").glob("*.js"))
     node = shutil.which("node")
     if node:
         for script in scripts:

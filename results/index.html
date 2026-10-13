@@ -25,7 +25,7 @@
 </div>
 
 <div id="main">
-  <div id="viewport" data-results-src="data.json">
+  <div id="viewport">
     <p id="viewer-status" role="status">Loading results...</p>
     <canvas id="c"></canvas>
     <div id="tooltip"></div>
@@ -34,25 +34,13 @@
     <div>
       <div class="sb-title">What you're looking at</div>
       <p class="sb-note">
-        One small cube = one task: <b>pick</b> an object, <b>place</b> it in a receptacle,
-        then <b>press</b> a coloured button. 4 objects &times; 4 receptacles &times; 4 buttons
-        = <b>64 tasks</b> in total.
-      </p>
-      <p class="sb-note">
-        Pick a training set from the menu above. <b>Blue</b> cubes are tasks it was trained on,
-        <b>orange</b> ones it never saw; darker means a higher success rate. Drag to rotate,
-        scroll to zoom, hover a cube for its numbers.
+        One cube per task. <b>Blue</b>: trained; <b>orange</b>: held out; darker: higher success.
       </p>
     </div>
     <div class="sb-divider"></div>
     <div>
       <div class="sb-title">Headline</div>
       <div class="stat-row" id="stats"></div>
-      <p class="sb-note" style="margin-top:6px;">
-        A <b>rollout</b> is one attempt at a task in the simulator, scored success or failure.
-        Each percentage pools every rollout across all tasks in that group and all random
-        seeds, so the counts below say how much evidence is behind it.
-      </p>
     </div>
     <div class="sb-divider"></div>
     <div>
@@ -62,20 +50,12 @@
     <div class="sb-divider"></div>
     <div>
       <div class="sb-title">How much of the task was seen before</div>
-      <p class="sb-note" style="margin-bottom:5px;">
-        A held-out task still shares <em>pairs</em> of ingredients with training &mdash;
-        object+receptacle, object+button, receptacle+button. Grouped by how many of those
-        three pairs appeared in some training task.
-      </p>
+      <p class="sb-note" style="margin-bottom:5px;">Held-out tasks, by how many of their three factor pairs appear in training.</p>
       <div id="pair-box"></div>
     </div>
     <div class="sb-divider"></div>
     <div>
       <div class="sb-title">Success by ingredient</div>
-      <p class="sb-note" style="margin-bottom:6px;">
-        Success rate over all tasks using each object, receptacle, or button &mdash; shows
-        whether one ingredient is harder than the rest.
-      </p>
       <div class="sb-note" style="margin-bottom:3px;">Object</div>
       <div id="factor-obj" class="factor-grid"></div>
     </div>
@@ -103,7 +83,8 @@
   </div>
 </div>
 
-<script defer src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script defer src="../assets/js/vendor/three-r128.min.js"></script>
+<script defer src="data.js"></script>
 <script defer src="../assets/js/results.js"></script>
 </body>
 </html>

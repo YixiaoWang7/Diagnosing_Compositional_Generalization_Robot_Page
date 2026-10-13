@@ -8,9 +8,8 @@
 </head>
 <body>
 
-<h1>Skills live in the parameters — only the instruction needs aligning</h1>
-<p class="subtitle">Sparse pretraining learns reusable subtask skills, but fails OOD because the instruction interface isn't calibrated. One demonstration per distinct instruction recovers large OOD success.</p>
-<p class="subtitle2">OOD = tasks never seen during pretraining &nbsp;|&nbsp; +1 demo/instruction = one demonstration for each of the 64 task instructions</p>
+<h1>Broad-coverage finetuning improves instruction following</h1>
+<p class="subtitle">Pretrain on B tasks, then finetune with one demonstration per instruction; test on the tasks held out from pretraining.</p>
 
 <div class="legend">
   <div class="legend-item"><div class="legend-swatch" style="background:#bbb"></div> Pretrained only (OOD)</div>
@@ -19,12 +18,10 @@
 
 <div class="chart-container">
   <h2>OOD Success: Before vs. After 1-Demo Finetuning</h2>
-  <p class="chart-desc">L5 Pick &amp; Place (64 tasks) — pretrained on B sparse diagonal tasks, then finetuned with 1 demo per instruction</p>
   <canvas id="chart"></canvas>
 </div>
 
-<p class="takeaway"><strong>Takeaway:</strong> Even with as few as 4 pretraining tasks, one demonstration per instruction is enough to jump from near-zero to &gt;50% OOD success — the skills were already there.</p>
-<p class="footnote">* B=8 baseline uses a single-seed evaluation (no 3-seed pooled baseline available for that checkpoint).</p>
+<p class="takeaway"><strong>Takeaway:</strong> Sparse pretraining already learns the skills; one demonstration per instruction steers them to new combinations (0.4% → 54.7%).</p>
 
 <script defer src="../assets/js/standalone/q2.js"></script>
 </body>

@@ -2,7 +2,7 @@
 const groups = [
   { label: 'B = 4', before: 0.39, after: 54.67, delta: 54.28 },
   { label: 'B = 6', before: 16.55, after: 57.70, delta: 41.15 },
-  { label: 'B = 8*', before: 28.04, after: 68.33, delta: 40.30 },
+  { label: 'B = 8', before: 28.04, after: 68.33, delta: 40.30 },
 ];
 
 // ─── Colors ─────────────────────────────────────────────────────────────────
