@@ -254,6 +254,22 @@ section .abstract-heading { margin: 32px 0 12px; }
   line-height: 1.8;
 }
 
+/* Spotlight video — the poster reserves the 16:9 box before metadata loads */
+.video-panel {
+  margin: 0;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.video-panel video {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  background: var(--panel);
+}
+
 /* Viewer iframe — constrained to the same column as every other block */
 .viewer-frame {
   position: relative;

@@ -1,0 +1,204 @@
+WEBVTT
+
+00:00.677 --> 00:04.700
+Diagnosing Compositional Generalization
+in Sequential Robot Tasks.
+
+00:05.200 --> 00:07.222
+Imagine a robot that picks an object,
+
+00:07.222 --> 00:09.844
+places it in a container,
+then presses a button.
+
+00:10.084 --> 00:12.999
+With four options each, that's
+already sixty-four tasks.
+
+00:13.239 --> 00:17.918
+Each extra subtask multiplies that, so
+demonstrating everything is impractical.
+
+00:18.158 --> 00:20.798
+Real datasets are often
+sparse: every object,
+
+00:20.798 --> 00:23.848
+container, and button appears,
+but few combinations.
+
+00:24.088 --> 00:27.670
+And policies often fail on new
+combinations of familiar parts.
+
+00:27.910 --> 00:31.311
+So which combinations does a
+robot actually need to practice?
+
+00:31.811 --> 00:34.955
+We bound the generalization
+gap by three sources of shift.
+
+00:35.195 --> 00:37.991
+Marginal shift: is each
+instruction value covered?
+
+00:38.231 --> 00:43.283
+Instruction-compositional shift: are familiar
+values recombined in unfamiliar ways?
+
+00:43.523 --> 00:46.454
+And context-action shift:
+do those combinations
+
+00:46.454 --> 00:48.887
+induce unfamiliar contexts and actions?
+
+00:49.127 --> 00:50.573
+That raises three questions.
+
+00:51.073 --> 00:52.959
+First, is full coverage necessary?
+
+00:53.199 --> 00:55.950
+We fix the demonstration
+budget, train on B tasks
+
+00:55.950 --> 00:58.363
+covering every value,
+and test on the rest.
+
+00:58.603 --> 01:02.360
+With four tasks, held-out
+success is only 0.4 percent.
+
+01:02.600 --> 01:07.320
+It climbs with more tasks, then saturates
+around sixteen, far below sixty-four.
+
+01:07.560 --> 01:11.877
+Why? Held-out tasks sharing more instruction
+pairs with training succeed more often.
+
+01:12.117 --> 01:16.724
+So we test an orthogonal design: every
+pair of values appears exactly once.
+
+01:16.964 --> 01:21.771
+With one quarter of the tasks, it
+reaches 78.2 percent held-out,
+
+01:21.771 --> 01:24.025
+close to full training's 78.6.
+
+01:24.525 --> 01:27.100
+Second, when sparse coverage
+fails, what is missing?
+
+01:27.340 --> 01:30.250
+Train on four tasks: 83 percent on those,
+
+01:30.250 --> 01:32.806
+only 0.4 percent on the other sixty.
+
+01:33.046 --> 01:36.010
+Yet those tasks show every
+skill: grasping each object,
+
+01:36.010 --> 01:38.596
+placing in each container,
+pressing each button.
+
+01:38.836 --> 01:41.527
+So is it missing skills,
+or unable to steer them?
+
+01:41.767 --> 01:46.765
+Finetuning with one demonstration
+per task lifts them to 54.7 percent.
+
+01:47.005 --> 01:50.860
+The same demonstrations from
+scratch reach only 0.3 percent.
+
+01:51.100 --> 01:53.085
+This suggests the skills are reusable.
+
+01:53.085 --> 01:55.123
+What's missing is instruction steering.
+
+01:55.623 --> 01:57.930
+Third, what if instructions
+depend on each other?
+
+01:58.170 --> 02:01.235
+Here the robot places a cube,
+then puts milk on the plate.
+
+02:01.475 --> 02:04.589
+The cube's container isn't given,
+but it can't be the plate,
+
+02:04.589 --> 02:07.392
+so the first placement depends
+on a later instruction.
+
+02:07.632 --> 02:12.208
+With sixteen tasks, we vary coverage of
+first-object, second-container pairs.
+
+02:12.448 --> 02:17.473
+From six pairs to sixteen, held-out
+success rises from 9 to 31 percent,
+
+02:17.473 --> 02:20.729
+and wrong-container errors
+fall from 21 to 14.
+
+02:20.969 --> 02:23.489
+A modular policy adds
+an oracle that passes
+
+02:23.489 --> 02:25.951
+only the active instruction at each stage.
+
+02:26.191 --> 02:28.585
+On independent tasks, that's enough:
+
+02:28.585 --> 02:30.248
+72 percent at four tasks.
+
+02:30.488 --> 02:33.119
+But while placing the cube,
+it sees only the cube.
+
+02:33.119 --> 02:35.488
+The plate is hidden, so
+it can't rule it out.
+
+02:35.728 --> 02:38.416
+Wrong-container errors
+stay near 24 percent,
+
+02:38.416 --> 02:41.227
+even with full coverage:
+an information limit.
+
+02:41.727 --> 02:43.953
+So: full enumeration is unnecessary,
+
+02:43.953 --> 02:46.675
+sparse failures can be
+steering, not skills,
+
+02:46.675 --> 02:49.459
+and dependent tasks need
+relational coverage.
+
+02:49.699 --> 02:53.818
+Collect data to cover the dependencies
+that matter, not every combination.
+
+02:54.058 --> 02:58.751
+Paper, code, data, and interactive results
+are on our project website. Thank you.

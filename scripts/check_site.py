@@ -34,7 +34,7 @@ class Page(HTMLParser):
                 if value in self.ids:
                     self.errors.append(f"duplicate ID: {value}")
                 self.ids.add(value)
-            if name in ("src", "href", "data-results-src"):
+            if name in ("src", "href", "poster", "data-results-src"):
                 self.references.append(value)
             if name.startswith("on"):
                 self.errors.append(f"inline event handler: {name}")
