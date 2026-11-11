@@ -32,7 +32,7 @@ The checker validates local links, assets, fragment targets, and viewer data. If
 | `assets/js/results.js` | Pick–Place–Press viewer initialization and interactions |
 | `assets/js/vendor/` | Existing Three.js r128 renderer, bundled locally with its MIT license |
 | `assets/images/` | Paper figures, including the retained source variants |
-| `assets/video/` | CoRL spotlight video in the Overview, with its poster frame and English captions (WebVTT) |
+| `assets/video/` | CoRL spotlight video below the hero links, with its poster frame and English captions (WebVTT) |
 | `assets/data/modularity_comparison.csv`, `.md` | Values plotted in the Further Findings figure and their provenance |
 | `q1/`, `q2/`, `q3/` | Standalone pages, original CSV exports, and data descriptions |
 | `results/` | Interactive viewer, original `data.json`, and generated browser script `data.js` |

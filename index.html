@@ -27,6 +27,13 @@
       <a href="https://github.com/YixiaoWang7/Diagnosing_Compositional_Generalization_Robot" target="_blank" rel="noopener">Code</a>
       <a href="#resources">Datasets</a>
     </div>
+    <figure class="video-panel">
+      <video controls playsinline preload="metadata" poster="assets/video/cg_spotlight_poster.jpg" aria-label="CoRL 2026 spotlight video, 3 minutes">
+        <source src="assets/video/cg_spotlight.mp4" type="video/mp4">
+        <track kind="captions" src="assets/video/cg_spotlight.en.vtt" srclang="en" label="English">
+        <a href="assets/video/cg_spotlight.mp4">Download the spotlight video (MP4, 3 minutes)</a>
+      </video>
+    </figure>
   </div>
 </header>
 
@@ -64,14 +71,6 @@
       <div class="label">held-out success from spreading<br>a fixed budget across dependencies</div>
     </div>
   </div>
-  <h3 class="abstract-heading" id="video-title">Spotlight Video</h3>
-  <figure class="video-panel">
-    <video controls playsinline preload="metadata" poster="assets/video/cg_spotlight_poster.jpg" aria-labelledby="video-title">
-      <source src="assets/video/cg_spotlight.mp4" type="video/mp4">
-      <track kind="captions" src="assets/video/cg_spotlight.en.vtt" srclang="en" label="English">
-      <a href="assets/video/cg_spotlight.mp4">Download the spotlight video (MP4, 3 minutes)</a>
-    </video>
-  </figure>
   <h3 class="abstract-heading">Abstract</h3>
   <div class="abstract-panel">
     Sequential robot manipulation requires policies to execute novel combinations of familiar instruction components. However, collecting demonstrations for all possible instruction tuples is combinatorially expensive, while sparsely covered datasets often fail under out-of-distribution recombination. This paper studies compositional generalization through the lens of instruction-space coverage. We decompose the generalization gap into three sources: marginal instruction shift, instruction-compositional shift, and context&ndash;action shift. Our results show that exhaustive tuple enumeration is unnecessary: a structured subset, as small as one quarter of the full task space, can recover strong out-of-distribution performance when it covers action-relevant dependencies.

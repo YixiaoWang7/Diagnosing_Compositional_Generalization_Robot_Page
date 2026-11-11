@@ -254,9 +254,12 @@ section .abstract-heading { margin: 32px 0 12px; }
   line-height: 1.8;
 }
 
-/* Spotlight video — the poster reserves the 16:9 box before metadata loads */
+/* Spotlight video below the hero links — narrower than the column so the
+   links and most of the video fit on a laptop's first screen. The poster
+   reserves the 16:9 box before metadata loads. */
 .video-panel {
-  margin: 0;
+  max-width: 880px;
+  margin: 32px auto 0;
   background: var(--panel);
   border: 1px solid var(--border);
   border-radius: var(--radius);
